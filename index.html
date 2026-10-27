@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Explore Classroom Arcade: original browser mini-games, a searchable game library, a local-file retro emulator, classic PC tools, and a searchable entertainment catalog.">
+  <meta name="application-name" content="Classroom Arcade">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Classroom Arcade">
+  <meta property="og:description" content="A browser-based hub for mini-games, retro game tools, and searchable catalogs.">
+  <meta property="og:url" content="https://jacobmoehle-destroyer.github.io/classroom-arcade/">
+  <title>Classroom Arcade | Browser Games &amp; Game Library</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #151d31;
+      --text: #f4f7ff;
+      --muted: #b9c4da;
+      --accent: #8bd3ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(ellipse at top, #1c2d4c, var(--bg) 58%);
+      color: var(--text);
+    }
+    header { padding: 36px 18px 24px; text-align: center; }
+    header .eyebrow {
+      text-transform: uppercase; letter-spacing: .16em; color: var(--accent);
+      font-size: .78rem; font-weight: 800;
+    }
+    h1 { margin: .35rem 0; font-size: clamp(2rem, 7vw, 3.3rem); line-height: 1.05; }
+    header p { max-width: 680px; margin: 12px auto; color: var(--muted); }
+    main { width: min(1050px, 100%); margin: auto; padding: 0 16px 36px; }
+    .notice {
+      border: 1px solid #53627c; background: #151d31cc; border-radius: 14px;
+      padding: 14px 16px; color: var(--muted); margin-bottom: 22px;
+    }
+    .notice strong { color: var(--text); }
+    .section-title { margin: 28px 0 12px; font-size: 1.3rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: linear-gradient(145deg, #1a2540, #111827);
+      border: 1px solid #34415c; border-radius: 16px; padding: 18px;
+      display: flex; flex-direction: column; min-height: 205px;
+    }
+    .icon { font-size: 2rem; }
+    .card h3 { margin: 8px 0 5px; font-size: 1.12rem; }
+    .card p { margin: 0 0 14px; color: var(--muted); flex: 1; }
+    a.button {
+      display: inline-block; text-align: center; border-radius: 10px;
+      background: var(--accent); color: #07111f; font-weight: 800;
+      text-decoration: none; padding: 10px 14px; margin-top: 8px;
+    }
+    a.button:hover, a.button:focus-visible { outline: 3px solid white; outline-offset: 2px; }
+    a.button.secondary { background: #273650; color: var(--text); border: 1px solid #53627c; }
+    .tag { color: #b8e9c7; font-size: .78rem; font-weight: 700; margin-bottom: 4px; }
+    footer { text-align: center; color: var(--muted); padding: 10px 18px 30px; font-size: .9rem; }
+    .small { font-size: .88rem; color: var(--muted); }
+    .skip-link {
+      position: absolute; left: 12px; top: -60px; z-index: 10;
+      background: var(--accent); color: #07111f; padding: 10px 14px;
+      border-radius: 10px; font-weight: 800;
+    }
+    .skip-link:focus { top: 12px; }
+    .site-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px auto 0; }
+    .site-nav a {
+      display: inline-block; border: 1px solid #53627c; border-radius: 999px;
+      padding: 7px 12px; color: var(--text); text-decoration: none; background: #151d31;
+    }
+    .site-nav a:hover, .site-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .catalog-search {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px;
+      padding: 14px; margin: 0 0 20px; border: 1px solid #34415c;
+      border-radius: 14px; background: #151d31e8;
+    }
+    .catalog-search label { grid-column: 1 / -1; font-weight: 800; }
+    .catalog-search input {
+      min-width: 0; width: 100%; padding: 11px 12px; border-radius: 10px;
+      border: 1px solid #53627c; background: #0c1425; color: var(--text); font: inherit;
+    }
+    .catalog-search button {
+      border: 1px solid #53627c; border-radius: 10px; padding: 10px 13px;
+      background: #273650; color: var(--text); font: inherit; cursor: pointer;
+    }
+    .catalog-search input:focus-visible, .catalog-search button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    #search-status { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: .9rem; }
+    [hidden] { display: none !important; }
+    @media (max-width: 440px) {
+      .catalog-search { grid-template-columns: 1fr; }
+      .catalog-search label, #search-status { grid-column: 1; }
+    }
+  
+    @media (prefers-reduced-motion: reduce) {
+      html:focus-within { scroll-behavior: auto; }
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to games</a>
+  <header>
+    <div class="eyebrow">A student-friendly game library</div>
+    <h1>🕹️ Classroom Arcade</h1>
+    <p>Pick a game, open it in your browser, and have fun. Use games approved for your setting.</p>
+    <nav class="site-nav" aria-label="Main sections">
+      <a href="#browser-games">Browser games</a>
+      <a href="./arcade/">Arcade Hub</a>
+      <a href="./library/">Universal Emulator</a>
+      <a href="./movie-theater/">Movie Theater</a>
+      <a href="./chat/">Global Chat</a>
+      <a href="./music/">Arcade Music</a>
+      <a href="./pc/">PC Emulator</a>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <div class="notice">
+      <strong>Site note:</strong> This page links to browser games and a self-hosted DOOM player.
+      Review games for age suitability, privacy, licensing, and school compatibility before use.
+    </div>
+
+    <section class="catalog-search" role="search" aria-label="Search Classroom Arcade">
+      <label for="site-search">Find a game or tool</label>
+      <input id="site-search" type="search" placeholder="Search games, emulators, genres…" autocomplete="off" aria-describedby="search-status">
+      <button type="button" id="clear-search">Clear</button>
+      <p id="search-status" role="status" aria-live="polite">Browse all games and tools, or type to filter the cards below.</p>
+    </section>
+
+    <h2 class="section-title" id="browser-games">Play in your browser</h2>
+    <section class="grid" aria-label="Browser games">
+      <article class="card">
+        <div class="icon" aria-hidden="true">🎬</div>
+        <div class="tag">Searchable catalog</div>
+        <h3>Movie Theater</h3>
+        <p>Browse and search the movie, TV, and anime titles from the attached shows list, organized alphabetically.</p>
+        <a class="button" href="./movie-theater/">Open Movie Theater 🎬</a>
+        <p class="small">Catalog only; viewing availability depends on legitimate streaming services and network access.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🌐</div>
+        <div class="tag">Community · Shared live chat</div>
+        <h3>Global Chat</h3>
+        <p>Choose a display name and chat with other Classroom Arcade visitors in one shared room.</p>
+        <a class="button" href="./chat/">Join Global Chat 💬</a>
+        <p class="small">Shared chat requires the database setup described in GLOBAL-CHAT-SETUP.md. Don't post private information.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🎵</div>
+        <div class="tag">Music player · Searchable playlist</div>
+        <h3>Arcade Music</h3>
+        <p>Listen to your MP3 collection with a Spotify-inspired player, track search, shuffle, repeat, progress controls, and a mobile-friendly layout.</p>
+        <a class="button" href="./music/">Open Arcade Music 🎧</a>
+        <p class="small">Local MP3s are only previewed on your device. To share tracks with visitors, host the audio files and list them in music/tracks.json. Only publish music you have permission to share.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">💀</div>
+        <div class="tag">Classic PC game · Requires your own game data</div>
+        <h3>DOOM (1993)</h3>
+        <p>Choose the built-in Dwasm player hosted in Classroom Arcade, or open the external Dwasm website. The game requires a compatible WAD file.</p>
+        <a class="button" href="./doom/">Play DOOM inside Classroom Arcade 🎮</a>
+        <a class="button secondary" href="https://dwasm.m-h.org.uk/" target="_blank" rel="noopener noreferrer">Open external Dwasm ↗</a>
+        <p class="small">Use a legally obtained, compatible DOOM WAD. Do not upload commercial game data to this public website.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">💀</div>
+        <div class="tag">Classic PC game · Requires your own game data</div>
+        <h3>DOOM II: Hell on Earth</h3>
+        <p>Use the built-in player or external Dwasm site, then select a compatible DOOM II WAD file.</p>
+        <a class="button" href="./doom/">Play DOOM II inside Classroom Arcade 🎮</a>
+        <a class="button secondary" href="https://dwasm.m-h.org.uk/" target="_blank" rel="noopener noreferrer">Open external Dwasm ↗</a>
+        <p class="small">The internal player may require you to choose the WAD file after opening it.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🔬</div>
+        <div class="tag">Browser game</div>
+        <h3>Half-Life</h3>
+        <p>Enter the Black Mesa research facility in this browser-based project.</p>
+        <a class="button" href="https://pixelsuft.github.io/hl/" target="_blank" rel="noopener noreferrer">Play Half-Life ↗</a>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🎯</div>
+        <div class="tag">Browser game</div>
+        <h3>Half-Life / Counter-Strike 1.6</h3>
+        <p>Classic Half-Life engine games in your browser.</p>
+        <a class="button" href="https://x8bitrain.github.io/webXash/" target="_blank" rel="noopener noreferrer">Play now ↗</a>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🧱</div>
+        <div class="tag">Original browser sandbox</div>
+        <h3>Classroom Sandbox</h3>
+        <p>Explore a 3D block world and build anything you imagine.</p>
+        <a class="button" href="./sandbox/">Play Classroom Sandbox 🎮</a>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🕹️</div>
+        <div class="tag">Instant-play · 6 original mini-games</div>
+        <h3>Arcade Hub</h3>
+        <p>Play Snake, Pong, Breakout, a mini platformer, a neon racer, and a pixel builder—all hosted on this site.</p>
+        <a class="button" href="./arcade/">Open Arcade Hub 🎮</a>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🎮</div>
+        <div class="tag">Unified game library · Local-file launcher</div>
+        <h3>Universal Emulator &amp; Game Library</h3>
+        <p>Search and favorite games, filter by genre or system, and load compatible retro game files into the built-in emulator with on-screen touch controls where supported.</p>
+        <a class="button" href="./library/">Open Universal Emulator 🎮</a>
+        <p class="small">ROMs stay local to your browser session. Supported systems depend on the file, emulator core, and device.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🖥️</div>
+        <div class="tag">x86 PC emulator · DOS and older operating systems</div>
+        <h3>Browser PC Emulator</h3>
+        <p>Boot a compatible PC disk image in a virtual x86 computer. Best for classic DOS games and some older Windows-era software; modern 3D games are not guaranteed to work.</p>
+        <a class="button" href="./pc/">Open Browser PC Emulator 🖥️</a>
+        <p class="small">Bring your own compatible disk image. No operating systems or commercial games are included.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">💾</div>
+        <div class="tag">Built-in browser emulator · Classic PC</div>
+        <h3>Classic PC / MS-DOS Emulator</h3>
+        <p>Try compatible classic DOS games and programs from files on your device using the built-in DOSBox Pure core. This is for older DOS software, not modern Windows or Steam games.</p>
+        <a class="button" href="./library/?system=dosbox_pure">Open PC Emulator 💾</a>
+        <p class="small">Requires compatible local game files and the emulator CDN. School network policies still apply.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">🌱</div>
+        <div class="tag">Community browser-port experiment</div>
+        <h3>Stardew Valley</h3>
+        <p>Try a community-hosted browser build from the Stardew page. The game runs on a third-party host; first load may be large, and iPad touch support depends on that build.</p>
+        <a class="button" href="./stardew/">Try Stardew Valley in browser 🌱</a>
+        <a class="button secondary" href="https://github.com/degloved-net/stardew-wasm" target="_blank" rel="noopener noreferrer">Port source & credit ↗</a>
+      </article>
+    </section>
+
+    <h2 class="section-title">Real games in your browser</h2>
+    <section class="grid" aria-label="Existing browser-playable games">
+      <article class="card">
+        <div class="icon" aria-hidden="true">⚙️</div>
+        <div class="tag">Open-source browser port</div>
+        <h3>Mindustry</h3>
+        <p>Build factories, automate production, and defend your base in this tower-defense and resource-management game.</p>
+        <a class="button" href="https://khoichon.dev/mindustry-web/" target="_blank" rel="noopener noreferrer">Play Mindustry ↗</a>
+      </article>
+      <article class="card">
+        <div class="icon" aria-hidden="true">🌍</div>
+        <div class="tag">Open-source · Browser strategy</div>
+        <h3>Freeciv</h3>
+        <p>A Civilization-inspired strategy game: grow a civilization, research technologies, build cities, and play against AI or other players.</p>
+        <a class="button" href="https://www.freecivweb.com/" target="_blank" rel="noopener noreferrer">Play Freeciv ↗</a>
+      </article>
+    </section>
+
+    <h2 class="section-title">Before adding a game</h2>
+    <div class="notice">
+      <ul>
+        <li>Confirm that each game is age-appropriate and allowed by your school or organization.</li>
+        <li>Check licenses before sharing game assets or files; don't upload copyrighted game data without permission.</li>
+        <li>Test Safari touch controls, audio, landscape mode, and sign-in requirements.</li>
+        <li>Ask the appropriate administrator to approve blocked game domains. Hosting this page on GitHub Pages does not automatically unblock other sites.</li>
+        <li>Prefer games with no account requirement, minimal tracking, and no external purchases.</li>
+      </ul>
+    </div>
+    <p class="small">Edit this page to rename the arcade, remove links, or add games you have permission to share.</p>
+  </main>
+
+  <footer>
+    <div class="visit-counter" role="status" aria-live="polite">
+      <span aria-hidden="true">👀</span>
+      <span><strong id="visit-count">—</strong> visits to Classroom Arcade</span>
+      <span class="small" id="visit-status">Loading live count…</span>
+    </div>
+    Classroom Arcade · Independent browser-game directory · External projects are maintained by their respective creators.
+  </footer>
+  <style>
+    .visit-counter {
+      display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+      gap: 8px; margin: 0 auto 14px; padding: 12px 16px; width: fit-content;
+      max-width: 100%; border: 1px solid #34415c; border-radius: 999px;
+      background: #151d31; color: var(--text);
+    }
+    .visit-counter strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+    .visit-counter .small { font-size: .78rem; }
+  </style>
+  <script>
+    (function () {
+      const input = document.getElementById('site-search');
+      const clear = document.getElementById('clear-search');
+      const status = document.getElementById('search-status');
+      const cards = Array.from(document.querySelectorAll('main .grid .card'));
+      const groups = Array.from(document.querySelectorAll('main .grid'));
+      const headings = groups.map(group => group.previousElementSibling).filter(el => el && el.matches('h2.section-title'));
+      function filterCards() {
+        const query = input.value.trim().toLocaleLowerCase();
+        let shown = 0;
+        cards.forEach(card => {
+          const match = !query || card.textContent.toLocaleLowerCase().includes(query);
+          card.hidden = !match;
+          if (match) shown++;
+        });
+        groups.forEach(group => {
+          group.hidden = !Array.from(group.querySelectorAll('.card')).some(card => !card.hidden);
+        });
+        headings.forEach(heading => {
+          const group = heading.nextElementSibling;
+          heading.hidden = !!(group && group.matches('.grid') && group.hidden);
+        });
+        status.textContent = query
+          ? (shown ? shown + ' matching game or tool' + (shown === 1 ? '' : 's') + '.' : 'No matches. Try a shorter search or clear the search.')
+          : 'Showing all ' + cards.length + ' games and tools.';
+      }
+      input.addEventListener('input', filterCards);
+      clear.addEventListener('click', () => { input.value = ''; filterCards(); input.focus(); });
+      filterCards();
+    })();
+  </script>
+  <script>
+    (async function () {
+      const count = document.getElementById('visit-count');
+      const status = document.getElementById('visit-status');
+      try {
+        const response = await fetch('https://api.counterapi.dev/v1/classroom-arcade-jacobmoehle/homepage/up', {cache:'no-store'});
+        if (!response.ok) throw new Error('Counter service unavailable');
+        const data = await response.json();
+        const total = Number(data.count ?? data.value);
+        if (!Number.isFinite(total)) throw new Error('Counter response invalid');
+        count.textContent = total.toLocaleString();
+        status.textContent = 'Live counter';
+      } catch (error) {
+        count.textContent = 'Unavailable';
+        status.textContent = 'Visit count temporarily unavailable';
+      }
+    })();
+  </script>
+</body>
+</html>
