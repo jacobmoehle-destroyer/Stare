@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Classroom Sandbox</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#87ceeb;font-family:system-ui,Arial,sans-serif;touch-action:none}
+body{position:relative}
+button{border:2px solid #ffffff66;border-radius:12px;background:#17202dee;color:white;font-weight:800;font-size:14px;padding:10px 12px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button:active,button.selected{background:#27864d}
+#world{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;touch-action:none}
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none;color:white;text-shadow:1px 2px 3px #000}
+#top{position:absolute;top:max(8px,env(safe-area-inset-top));left:8px;right:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;pointer-events:auto}
+#brand{background:#17202dee;border-radius:10px;padding:9px;font-size:13px;font-weight:900}
+#top button{font-size:11px;padding:9px}
+#craftBtn{background:#6a4a18ee!important;border-color:#ffe29a!important}
+#touchToggleBtn{background:#355b78ee!important;border-color:#a9d9ff!important}
+body.touch-controls-hidden #movement,body.touch-controls-hidden #actions,body.touch-controls-hidden #jump{display:none!important}
+#craftOverlay{display:none;position:fixed;inset:0;z-index:40;background:#07101beF;color:white;overflow:auto;padding:16px;touch-action:auto}
+#craftPanel{max-width:560px;margin:5vh auto;background:#17202d;border:1px solid #ffffff33;border-radius:18px;padding:18px;box-shadow:0 12px 40px #0008}
+.recipe-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.recipe-grid button{min-height:58px;text-align:left;font-size:12px}
+@media(max-width:420px){.recipe-grid{grid-template-columns:1fr}}
+#status{position:absolute;top:65px;left:9px;max-width:75%;background:#17202ddd;border-radius:8px;padding:6px 9px;font-size:12px}
+#palette{position:fixed;left:50%;bottom:max(7px,env(safe-area-inset-bottom));transform:translateX(-50%);display:grid;grid-template-columns:repeat(9,minmax(35px,49px));gap:3px;max-width:96vw;padding:5px;border:2px solid #ffffff55;border-radius:9px;background:#171717dd;pointer-events:auto;z-index:15;box-shadow:0 3px 12px #0008}
+.block-choice{position:relative;min-width:0;min-height:48px;padding:3px 2px;font-size:9px;border-radius:5px;border:2px solid #ffffff33;background:#252525ee;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.block-choice.selected{border:2px solid #fff;background:#53634b}
+.swatch{width:21px;height:21px;display:block;border:1px solid #ffffff88;border-radius:2px;margin:0}
+.slot-count{position:absolute;right:2px;bottom:0;font-size:11px;line-height:1.1;text-shadow:1px 1px 2px #000;font-weight:900}
+#inventoryBtn{background:#315d87ee!important}
+#stationOverlay{display:none;position:fixed;inset:0;z-index:48;background:#07101bf2;color:white;overflow:auto;padding:14px;touch-action:auto}
+#stationPanel{max-width:540px;margin:6vh auto;background:#17202d;border:2px solid #ffffff44;border-radius:16px;padding:16px;box-shadow:0 12px 40px #0009}
+#survivalHud{position:fixed!important;top:auto!important;left:50%!important;bottom:68px!important;transform:translateX(-50%);display:none;background:#171717dd!important;border:2px solid #ffffff44;border-radius:7px!important;padding:4px 10px!important;line-height:1!important;white-space:nowrap;font-size:20px!important;letter-spacing:2px;box-shadow:0 3px 10px #0007}
+#healthIcons,#hungerIcons{display:flex;justify-content:center;gap:3px;min-height:20px}
+#healthIcons{margin-bottom:2px}
+#inventoryOverlay{display:none;position:fixed;inset:0;z-index:45;background:#07101bf2;color:white;overflow:auto;padding:14px;touch-action:auto}
+#inventoryPanel{max-width:600px;margin:4vh auto;background:#17202d;border:2px solid #ffffff44;border-radius:16px;padding:16px;box-shadow:0 12px 40px #0009}
+#inventoryGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px}
+.inventory-slot{min-height:66px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:2px solid #ffffff30;border-radius:7px;background:#0b1420;font-size:10px;position:relative;overflow:hidden}
+.inventory-slot .item-icon{font-size:22px;line-height:1.1}
+.inventory-slot .item-count{position:absolute;right:4px;bottom:3px;font-size:12px;font-weight:900}
+.inventory-slot:disabled{opacity:.6}
+@media(max-width:420px){#palette{grid-template-columns:repeat(9,minmax(29px,1fr));width:96vw;gap:2px}.block-choice{min-height:43px;font-size:8px}.swatch{width:18px;height:18px}#inventoryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}#survivalHud{bottom:61px!important;font-size:17px!important}}
+
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:26px;font-weight:900;pointer-events:none}
+#help{position:absolute;right:9px;top:75px;max-width:190px;background:#17202ddd;padding:8px;border-radius:10px;font-size:11px;line-height:1.5}
+#movement{position:fixed;z-index:10;left:max(16px,env(safe-area-inset-left));bottom:98px;width:112px;height:112px;border:2px solid #ffffff55;border-radius:50%;background:#17202d88;box-shadow:0 4px 16px #0005;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+#stick{position:absolute;left:50%;top:50%;width:46px;height:46px;transform:translate(-50%,-50%);border:2px solid #ffffffbb;border-radius:50%;background:#dce8f0cc;box-shadow:0 2px 8px #0006;pointer-events:none}
+#movement:after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;transform:translate(-50%,-50%);border-radius:50%;background:#ffffff55;pointer-events:none}
+#actions{position:fixed;z-index:10;right:max(14px,env(safe-area-inset-right));bottom:88px;display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+#actions button{width:62px;height:38px;padding:3px;font-size:9px;touch-action:manipulation;box-shadow:0 3px 10px #0005}
+#jump{position:fixed;z-index:11;right:max(18px,env(safe-area-inset-right));bottom:238px;width:62px;height:56px;border-radius:50%;background:#267c45ee;border:2px solid #ffffffbb;pointer-events:auto;touch-action:manipulation;box-shadow:0 3px 10px #0005}
+#lookHint{position:fixed;z-index:5;bottom:65px;left:50%;transform:translateX(-50%);background:#17202ddd;padding:5px 9px;border-radius:8px;font-size:11px;white-space:nowrap;pointer-events:none}
+@media(max-width:650px){
+#brand{font-size:11px}#top{gap:4px}#top button{padding:8px 6px;font-size:10px}
+#help{top:105px;max-width:145px;font-size:10px}#status{top:62px;font-size:11px}
+#movement{left:6px;bottom:72px;transform:scale(.78);transform-origin:bottom left}
+#actions{right:6px;bottom:68px}#actions button{width:55px;height:33px;font-size:8px}
+#jump{right:10px;bottom:206px;width:54px;height:49px}
+#palette{gap:2px}.block-choice{min-width:0;font-size:8px}#survivalHud{bottom:57px!important}
+}
+@media(orientation:landscape) and (max-height:500px){
+#help{display:none}#movement{bottom:40px}#actions{bottom:38px}#jump{bottom:224px}
+#palette{bottom:3px}#survivalHud{bottom:55px!important}#lookHint{display:none}
+}
+
+#analogGrain{display:none;position:fixed;inset:0;z-index:119;pointer-events:none;opacity:.24;mix-blend-mode:soft-light;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.11) 0px,rgba(255,255,255,.11) 1px,transparent 1px,transparent 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.12) 0px,rgba(0,0,0,.12) 1px,transparent 1px,transparent 4px);animation:grainJitter .16s steps(2) infinite}
+#analogGrain:after{content:"";position:absolute;inset:-20%;background-image:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.3) 100%);animation:grainDrift 5s linear infinite}
+@keyframes grainJitter{0%{transform:translate(0,0)}25%{transform:translate(-1%,1%)}50%{transform:translate(1%,-1%)}75%{transform:translate(1%,1%)}100%{transform:translate(-1%,-1%)}}
+@keyframes grainDrift{0%{transform:translate(-1%,-1%)}50%{transform:translate(1%,1%)}100%{transform:translate(-1%,-1%)}}
+#nightmareOverlay{display:none;position:fixed;inset:0;z-index:120;pointer-events:none;color:#fff;text-align:center;font-family:system-ui,Arial,sans-serif;background:transparent}
+#nightmareTitle{position:absolute;top:12%;left:5%;right:5%;font-size:clamp(22px,5vw,44px);font-weight:1000;letter-spacing:3px;text-shadow:0 0 12px #f00,2px 3px 5px #000}
+#nightmareTimer{position:absolute;bottom:12%;left:0;right:0;font-size:clamp(15px,3vw,24px);font-weight:800;text-shadow:0 2px 5px #000}
+#nightmareTint{position:absolute;inset:0;background:rgba(120,0,0,0);transition:background .15s}
+#nightmareOverlay.jumpscare #nightmareTint{background:rgba(180,0,0,.72);animation:redPulse .22s infinite alternate}
+#nightmareOverlay.fading #nightmareTint{background:rgba(0,0,0,.96);animation:none}
+@keyframes redPulse{from{background:rgba(120,0,0,.45)}to{background:rgba(255,0,0,.82)}}
+@media(prefers-reduced-motion:reduce){#nightmareOverlay.jumpscare #nightmareTint{animation:none}}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div id="top">
+    <div id="brand">🧱 CLASSROOM SANDBOX</div>
+    <button id="cameraBtn">🎥 First Person</button>
+    <button id="soundBtn">🔊 Sound: On</button>
+    <button id="modeBtn">🛠 Creative</button>
+    <button id="craftBtn">🧰 Craft (C)</button>
+    <button id="inventoryBtn">🎒 Inventory (I)</button>
+    <button id="touchToggleBtn" aria-pressed="true">Touch Controls: On</button>
+    <button id="fullscreenBtn">⛶ Fullscreen</button>
+    <button id="saveBtn">💾 Save</button>
+    <button id="menuBtn">☰ Menu</button>
+    <button id="backToArcadeBtn" type="button" title="Return to Classroom Arcade">⬅ Back to Arcade</button>
+    <button id="resetBtn">↻ Respawn</button>
+  </div>
+  <div id="status">Loading world...</div>
+  <div id="survivalHud" aria-label="Health and hunger"><div id="healthIcons" aria-label="Health">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</div><div id="hungerIcons" aria-label="Hunger">🍗🍗🍗🍗🍗🍗🍗🍗🍗🍗</div><div style="font-size:10px;letter-spacing:0;text-align:center"><span id="healthValue">20</span>/20 health · <span id="hungerValue">20</span>/20 hunger</div></div>
+  <div id="crosshair">+</div>
+  <div id="help">
+    <b>COMPUTER</b><br>
+    WASD: move<br>Space: jump<br>Mouse: look<br>
+    Left click: break<br>Right click: place<br>E: collect animal<br>R: eat food<br>
+    <b>TOUCH</b><br>
+    Left pad: move<br>Drag world: look<br>
+    Right buttons: jump/build
+  </div>
+  <div id="palette" aria-label="Quick access hotbar"></div>
+</div>
+
+<div id="movement" aria-label="Movement joystick">
+  <div id="stick"></div>
+</div>
+<button id="jump">JUMP</button>
+<div id="actions">
+  <button id="breakBtn">⛏ BREAK</button>
+  <button id="placeBtn">🧱 PLACE</button>
+  <button id="useBtn">🐾 COLLECT</button>
+  <button id="eatBtn">🍖 EAT</button>
+</div>
+<div id="lookHint">Drag the world to look up, down, and around</div>
+<div id="menuOverlay" style="display:none;position:fixed;inset:0;z-index:30;background:#08111beF;color:white;overflow:auto;padding:20px;font-family:system-ui,Arial,sans-serif;touch-action:auto">
+  <div style="max-width:520px;margin:5vh auto;background:#17202d;border:1px solid #ffffff33;border-radius:18px;padding:20px;box-shadow:0 12px 40px #0008">
+    <h1 style="margin:0 0 6px;font-size:26px">🧱 Classroom Sandbox</h1>
+    <p style="margin:0 0 18px;color:#cbd5e1">World controls and settings</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button id="resumeBtn">▶ Resume</button><button id="saveMenuBtn">💾 Save World</button>
+      <button id="loadBtn">📂 Load Save</button><button id="newWorldBtn">🌍 New World</button>
+    </div>
+    <hr style="border-color:#ffffff22;margin:18px 0">
+    <h2 style="font-size:18px">Game mode</h2>
+    <p style="font-size:13px;color:#cbd5e1">Creative has unlimited blocks. Survival adds health, hunger, resource collecting, food, and basic crafting.</p>
+    <button id="modeMenuBtn" style="width:100%">Switch to Survival</button>
+    <hr style="border-color:#ffffff22;margin:18px 0">
+    <h2 style="font-size:18px">🎒 Inventory & Crafting</h2>
+    <p id="inventoryText" style="font-size:13px;line-height:1.7;color:#e2e8f0;background:#0b1420;border-radius:10px;padding:10px;max-height:150px;overflow:auto">Inventory loads here.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button id="eatMenuBtn">🍖 Eat Food</button><button id="collectMenuBtn">🐾 Collect Nearby</button>
+    </div>
+    <button id="openCraftFromMenuBtn" style="width:100%;margin-top:8px">🧰 Open Crafting & Tools</button>
+    <p style="font-size:12px;color:#cbd5e1;line-height:1.5">In Survival, broken blocks go into your inventory. Use the dedicated 🧰 Craft button to make tools, a crafting table, a bed, torches, planks, and sticks.</p>
+    <hr style="border-color:#ffffff22;margin:18px 0">
+    <h2 style="font-size:18px">Graphics</h2>
+    <label for="qualitySelect" style="display:block;margin:10px 0 5px">Rendering quality</label>
+    <select id="qualitySelect" style="width:100%;padding:10px;border-radius:8px;font-size:15px"><option value="0.65">Ultra battery saver</option><option value="0.85">Battery saver</option><option value="1">Balanced</option><option value="1.2">High</option></select>
+    <label for="distanceSelect" style="display:block;margin:14px 0 5px">Render distance</label>
+    <select id="distanceSelect" style="width:100%;padding:10px;border-radius:8px;font-size:15px"><option value="1">Near (3×3 chunks)</option><option value="2">Normal (5×5 chunks)</option><option value="3">Far (7×7 chunks)</option><option value="4">Very Far (9×9 chunks)</option></select>
+    <p style="font-size:12px;color:#cbd5e1;line-height:1.5">Performance update: instanced chunk rendering reduces separate draw calls, nearby-only block raycasts, lower default pixel ratio, small chunk-generation batches, configurable render distance, and FPS display. The game preloads 30 nearby chunks before spawning. Use Battery Saver and Near render distance on older iPads/Chromebooks. Saves stay in this browser on this device. Day/night, new biomes, ores, armor, and crafting are included.</p>
+    <button id="closeMenuBtn" style="width:100%;margin-top:10px">Done</button>
+    <div id="menuMessage" style="margin-top:12px;font-size:13px;color:#b8f7c5"></div>
+  </div>
+</div>
+
+<div id="inventoryOverlay" role="dialog" aria-label="Inventory">
+  <div id="inventoryPanel">
+    <h2 style="margin:0 0 5px">🎒 Inventory</h2>
+    <p style="font-size:12px;color:#cbd5e1;margin:0">Tap a block to equip it in your hotbar. In Survival, collected materials are limited and placing blocks uses them.</p>
+    <div id="inventoryGrid"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button id="inventoryCraftBtn">🧰 Craft</button><button id="closeInventoryBtn">Done</button></div>
+    <p id="inventoryMessage" style="font-size:12px;color:#b8f7c5;min-height:16px;margin-bottom:0"></p>
+  </div>
+</div>
+
+<div id="stationOverlay" role="dialog" aria-label="Storage station">
+  <div id="stationPanel">
+    <h2 id="stationTitle" style="margin:0 0 6px">📦 Chest</h2>
+    <p id="stationDescription" style="font-size:12px;color:#cbd5e1;margin:0 0 12px">Store items here for this world.</p>
+    <div id="stationContents" style="white-space:pre-line;background:#0b1420;border-radius:10px;padding:12px;min-height:100px;font-size:13px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button id="stationStoreBtn">📥 Store Inventory</button><button id="stationTakeBtn">📤 Take All</button>
+    </div>
+    <button id="stationSmeltBtn" style="display:none;width:100%;margin-top:8px">🔥 Smelt 1 Iron Ore (needs Coal)</button>
+    <button id="stationCloseBtn" style="width:100%;margin-top:8px">Done</button>
+    <p id="stationMessage" style="font-size:12px;color:#b8f7c5;min-height:16px;margin-bottom:0"></p>
+  </div>
+</div>
+
+<div id="craftOverlay" role="dialog" aria-label="Crafting menu">
+  <div id="craftPanel">
+    <h2 style="margin:0 0 6px">🧰 Crafting & Tools</h2>
+    <p style="margin:0 0 12px;color:#cbd5e1;font-size:13px">Craft tools to mine tougher blocks. Crafted blocks and tools are saved with your inventory.</p>
+    <p id="craftInventoryText" style="white-space:pre-line;background:#0b1420;padding:10px;border-radius:9px;font-size:12px"></p>
+    <h3 style="margin:12px 0 7px">🪵 Materials & building</h3>
+    <div class="recipe-grid">
+      <button id="craftPlanksBtn">🪵 Wooden Planks ×4<br><small>1 Wood</small></button>
+      <button id="craftSticksBtn">🪄 Sticks ×4<br><small>2 Planks</small></button>
+      <button id="craftTableBtn">🧰 Crafting Table ×1<br><small>4 Planks</small></button>
+      <button id="craftBedBtn">🛏️ Bed ×1<br><small>3 Planks + 3 Leaves</small></button>
+      <button id="craftTorchBtn">🔥 Torches ×4<br><small>1 Stick + 1 Coal</small></button>
+      <button id="craftChestBtn">📦 Chest ×1<br><small>8 Planks</small></button>
+      <button id="craftFurnaceBtn">🔥 Furnace ×1<br><small>8 Cobblestone</small></button>
+      <button id="craftConcreteBtn">⬜ Concrete ×4<br><small>4 Sand + 4 Clay</small></button>
+      <button id="craftObsidianBtn">🟪 Obsidian ×1<br><small>4 Stone + 2 Amethyst Shards</small></button>
+      <button id="craftGlowstoneBtn">✨ Glowstone ×1<br><small>4 Amethyst Shards</small></button>
+      <button id="craftCherryBtn">🌸 Cherry Wood ×2<br><small>2 Wood</small></button>
+    </div>
+    <h3 style="margin:15px 0 7px">⛏️ Tools</h3>
+    <div class="recipe-grid">
+      <button id="craftWoodPickBtn">🪵 Wooden Pickaxe ×1<br><small>3 Planks + 2 Sticks</small></button>
+      <button id="craftStonePickBtn">🪨 Stone Pickaxe ×1<br><small>3 Cobblestone + 2 Sticks</small></button>
+      <button id="craftAxeBtn">🪓 Wooden Axe ×1<br><small>3 Planks + 2 Sticks</small></button>
+      <button id="craftShovelBtn">🥄 Wooden Shovel ×1<br><small>1 Plank + 2 Sticks</small></button>
+      <button id="craftShieldBtn">🛡️ Shield ×1<br><small>6 Planks + 1 Iron Ingot</small></button>
+      <button id="craftHelmetBtn">⛑️ Iron Helmet ×1<br><small>5 Iron Ingots</small></button>
+      <button id="craftChestplateBtn">🦺 Iron Chestplate ×1<br><small>8 Iron Ingots</small></button>
+      <button id="craftLeggingsBtn">👖 Iron Leggings ×1<br><small>7 Iron Ingots</small></button>
+      <button id="craftBootsBtn">🥾 Iron Boots ×1<br><small>4 Iron Ingots</small></button>
+    </div>
+    <p style="font-size:12px;color:#cbd5e1;line-height:1.5">Survival mining: stone, coal, and amethyst need a wooden pickaxe or better. Iron, copper, gold, emerald, diamond, and ancient debris need a stone pickaxe. New biomes include jungle, cherry grove, and mushroom regions. Armor reduces fall damage; day and night cycle automatically. Bedrock cannot be mined.</p>
+    <button id="closeCraftBtn" style="width:100%;margin-top:12px">Done</button>
+  </div>
+</div>
+
+<div id="mainMenu" style="position:fixed;inset:0;z-index:50;overflow:auto;padding:20px;background:linear-gradient(145deg,#101c2bee,#183c2bee),linear-gradient(#87ceeb,#3d743c);color:white;font-family:system-ui,Arial,sans-serif;touch-action:auto;display:flex;align-items:center;justify-content:center">
+  <div style="width:min(100%,620px);max-height:94vh;overflow:auto;background:#101a28f5;border:1px solid #ffffff33;border-radius:22px;padding:clamp(18px,4vw,30px);box-shadow:0 18px 60px #0009">
+    <div style="text-align:center;font-size:46px;line-height:1.2">🧱🌳⛏️</div>
+    <h1 style="text-align:center;font-size:clamp(27px,6vw,40px);margin:8px 0 4px">CLASSROOM SANDBOX</h1>
+    <p style="text-align:center;color:#cbd5e1;margin:0 0 22px">Build your own world. Play your way.</p>
+    <div id="continueArea" style="display:none;margin-bottom:10px"><button id="continueBtn" style="width:100%;padding:14px;font-size:16px">▶ Continue World</button></div>
+    <h2 style="font-size:18px;margin:12px 0">Create a new world</h2>
+    <label for="worldTypeSelect" style="display:block;margin:8px 0 5px;color:#e2e8f0;font-size:14px">World type</label>
+    <select id="worldTypeSelect" style="width:100%;padding:12px;border-radius:10px;font-size:15px;margin-bottom:10px"><option value="normal">🌍 Normal world — hills, forests, deserts, snow</option><option value="superflat">🟩 Superflat — flat building world</option></select>
+    <p style="font-size:12px;color:#cbd5e1;margin:0 0 12px">Normal worlds include forests, jungles, cherry groves, mushroom regions, deserts, snowy regions, taller mountains, deeper caves, new ores, and drifting clouds. Superflat worlds are level for easy building. Choose a type, then pick Creative or Survival.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button id="createCreativeBtn" style="padding:16px 10px;background:#246b42"><span style="font-size:24px">🛠️</span><br><span style="font-size:16px">Creative</span><br><small style="font-weight:500">Unlimited blocks · no hunger</small></button>
+      <button id="createSurvivalBtn" style="padding:16px 10px;background:#8b3b35"><span style="font-size:24px">❤️</span><br><span style="font-size:16px">Survival</span><br><small style="font-weight:500">Collect · craft · stay alive</small></button>
+    </div>
+    <h2 style="font-size:18px;margin:22px 0 8px">Saved worlds</h2>
+    <p style="color:#cbd5e1;font-size:13px;margin:0 0 10px">Each world shows its game mode. Saves are stored only in this browser on this device.</p>
+    <div id="savedWorldList" style="display:grid;gap:8px"><p style="color:#94a3b8;font-size:13px">No saved worlds yet. Create a world and press Save.</p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px"><button id="mainSettingsBtn">⚙️ Settings</button><button id="mainExitBtn">✖ Back to Game</button></div>
+    <p id="mainMenuMessage" style="min-height:18px;font-size:13px;color:#b8f7c5;margin:12px 0 0;text-align:center"></p>
+  </div>
+</div>
+
+<div id="loadingScreen" style="display:none;position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#0b1728f5,#193b2af5);color:white;align-items:center;justify-content:center;padding:24px;font-family:system-ui,Arial,sans-serif;text-align:center;touch-action:auto">
+  <div style="width:min(100%,460px);background:#101a28;border:1px solid #ffffff33;border-radius:20px;padding:26px;box-shadow:0 18px 60px #0008">
+    <div style="font-size:42px">🌄 🧱 ☁️</div><h1 style="margin:8px 0;font-size:28px">Building your world</h1>
+    <p id="loadingMessage" style="color:#cbd5e1;margin:0 0 16px">Preparing the spawn area...</p>
+    <div style="height:18px;border-radius:20px;background:#050b12;overflow:hidden;border:1px solid #ffffff33"><div id="loadingBar" style="height:100%;width:0%;background:linear-gradient(90deg,#37b66b,#9de36d);transition:width .12s"></div></div>
+    <p id="loadingPercent" style="font-weight:800;margin:10px 0 0">0%</p>
+    <p style="font-size:12px;color:#94a3b8;margin:8px 0 0">Generating 30 nearby chunks in small batches to reduce freezing.</p>
+  </div>
+</div>
+
+<div id="analogGrain" aria-hidden="true"></div>\n<div id="nightmareOverlay" aria-live="assertive">
+  <div id="nightmareTint"></div>
+  <div id="nightmareTitle">YOU ARE NOT ALONE</div>
+  <div id="nightmareTimer">Something is watching...</div>
+</div>
+<script src="./three.min.js"></script>
+<script>
+(() => {
+"use strict";
+
+const status = document.getElementById("status");
+if (!window.THREE) {
+  status.textContent = "three.min.js is missing. Check the sandbox folder.";
+  return;
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb,55,145);
+const camera = new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,240);
+const renderer = new THREE.WebGLRenderer({antialias:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,matchMedia("(max-width: 700px)").matches?1.05:1.25));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.domElement.id = "world";
+document.body.insertBefore(renderer.domElement,document.getElementById("hud"));
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x65704c,2));
+const sun = new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(-15,30,12);
+scene.add(sun);
+// Small nearest-filtered pixel-art textures for environmental objects.
+// These are generated locally so the game needs no external image downloads.
+function makePixelTexture(base, palette, seed=1, detail=120, size=32){
+  const c=document.createElement("canvas");c.width=c.height=size;
+  const ctx=c.getContext("2d");ctx.fillStyle=base;ctx.fillRect(0,0,size,size);
+  let state=(seed>>>0)||1;function rand(){state=(state*1664525+1013904223)>>>0;return state/4294967296;}
+  for(let i=0;i<detail;i++){
+    ctx.fillStyle=palette[Math.floor(rand()*palette.length)];
+    const w=1+Math.floor(rand()*4),h=1+Math.floor(rand()*4);
+    ctx.fillRect(Math.floor(rand()*size),Math.floor(rand()*size),w,h);
+  }
+  const tex=new THREE.CanvasTexture(c);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+function pixelMaterial(base,palette,seed,detail=120){return new THREE.MeshLambertMaterial({map:makePixelTexture(base,palette,seed,detail)});}
+// Lightweight voxel clouds drift above the terrain, with subtle pixel shading.
+const cloudMaterial=pixelMaterial("#f7fbff",["#ffffff","#eaf3f8","#dce8ef","#f4f8fb"],194,75);
+const cloudGeometry=new THREE.BoxGeometry(1,1,1);
+const clouds=[];
+for(let i=0;i<18;i++){
+  const group=new THREE.Group();const seed=i*137.7+41;
+  const width=3+(i%4),depth=2+(i%3);
+  for(let x=0;x<width;x++)for(let z=0;z<depth;z++){
+    if((x+z+i)%4===0)continue;
+    const cube=new THREE.Mesh(cloudGeometry,cloudMaterial);cube.position.set(x-width/2,0,z-depth/2);group.add(cube);
+  }
+  group.position.set(((seed*7)%240)-120,27+(i%4)*1.8,((seed*11)%240)-120);scene.add(group);clouds.push({group,speed:.35+(i%5)*.08});
+}
+
+const names={grass:"Grass",dirt:"Dirt",stone:"Stone",sand:"Sand",wood:"Wood",leaves:"Leaves",planks:"Planks",cobble:"Cobblestone",bricks:"Bricks",glass:"Glass",snow:"Snow",coal:"Coal Ore",iron:"Iron Ore",gold:"Gold Ore",diamond:"Diamond Ore",bedrock:"Bedrock",crafting_table:"Crafting Table",bed:"Bed",torch:"Torch",chest:"Chest",furnace:"Furnace",copper:"Copper Ore",amethyst:"Amethyst Block",emerald:"Emerald Ore",obsidian:"Obsidian",netherrack:"Netherrack",glowstone:"Glowstone",prismarine:"Prismarine",ice:"Ice",concrete:"Concrete",cherry_wood:"Cherry Wood",mangrove_wood:"Mangrove Wood",mushroom_block:"Mushroom Block",clay:"Clay",ancient_debris:"Ancient Debris"};
+const colors={grass:0x62a844,dirt:0x87502c,stone:0x888b91,sand:0xd8c27c,wood:0x93602f,leaves:0x388a3d,planks:0xb9874d,cobble:0x686d72,bricks:0x9d4d3e,glass:0x9adbe8,snow:0xeaf4ff,coal:0x414449,iron:0xa7a09a,gold:0xe4b52c,diamond:0x32d5d1,bedrock:0x292a2d,crafting_table:0x8a6037,bed:0xb83c42,torch:0xffc857,chest:0x9b6a35,furnace:0x65686b,copper:0xb96e48,amethyst:0x9b65cc,emerald:0x16a86b,obsidian:0x302344,netherrack:0x7e302b,glowstone:0xe9bd58,prismarine:0x4faaa0,ice:0xa8e5f4,concrete:0xc9cbd0,cherry_wood:0xd88da6,mangrove_wood:0x784334,mushroom_block:0xd7c3b4,clay:0x929fae,ancient_debris:0x705348};
+const materials={};
+
+function createTexture(type){
+  const c=document.createElement("canvas");c.width=c.height=32;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#"+colors[type].toString(16).padStart(6,"0");
+  ctx.fillRect(0,0,32,32);
+  let seed=type.length*719+colors[type];
+  function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+  for(let i=0;i<100;i++){
+    ctx.fillStyle=rand()>.5?"rgba(255,255,255,.15)":"rgba(0,0,0,.15)";
+    ctx.fillRect(Math.floor(rand()*32),Math.floor(rand()*32),2+Math.floor(rand()*5),2+Math.floor(rand()*5));
+  }
+  if(type==="grass"){
+    ctx.fillStyle="#87502c";ctx.fillRect(0,25,32,7);
+    ctx.fillStyle="#70b84c";
+    for(let i=0;i<8;i++)ctx.fillRect(Math.floor(rand()*32),24,2,4);
+  }
+  if(type==="wood"){
+    ctx.fillStyle="#684323";
+    for(let x=4;x<32;x+=8)ctx.fillRect(x,0,2,32);
+  }
+  if(type==="leaves"){
+    for(let i=0;i<25;i++){
+      ctx.fillStyle=i%2?"#286d30":"#65a947";
+      ctx.fillRect(Math.floor(rand()*32),Math.floor(rand()*32),4,4);
+    }
+  }
+  if(type==="coal"||type==="iron"||type==="gold"||type==="diamond"){
+    const oreColor={coal:"#242629",iron:"#d0b9a5",gold:"#ffe15a",diamond:"#8afff3"}[type];
+    for(let i=0;i<15;i++){ctx.fillStyle=oreColor;ctx.fillRect(Math.floor(rand()*28),Math.floor(rand()*28),3+Math.floor(rand()*4),3+Math.floor(rand()*4));}
+  }
+  if(type==="bricks"){
+    ctx.strokeStyle="#e0a18a";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,10);ctx.lineTo(32,10);ctx.moveTo(0,22);ctx.lineTo(32,22);ctx.moveTo(10,0);ctx.lineTo(10,10);ctx.moveTo(24,10);ctx.lineTo(24,22);ctx.moveTo(8,22);ctx.lineTo(8,32);ctx.stroke();
+  }
+  if(type==="cobble"){
+    ctx.strokeStyle="#4c5054";ctx.lineWidth=2;for(let i=0;i<6;i++){ctx.strokeRect(Math.floor(rand()*23),Math.floor(rand()*23),6+Math.floor(rand()*5),5+Math.floor(rand()*5));}
+  }
+  if(type==="copper"){for(let i=0;i<18;i++){ctx.fillStyle=i%2?"#d78b5d":"#875039";ctx.fillRect(Math.floor(rand()*28),Math.floor(rand()*28),3+Math.floor(rand()*4),3+Math.floor(rand()*4));}}
+  if(type==="amethyst"){for(let i=0;i<14;i++){ctx.fillStyle=i%2?"#d0a3ff":"#6942a1";ctx.fillRect(Math.floor(rand()*28),Math.floor(rand()*28),3+Math.floor(rand()*5),3+Math.floor(rand()*5));}}
+  if(type==="emerald"){for(let i=0;i<14;i++){ctx.fillStyle=i%2?"#6fffb6":"#087d50";ctx.fillRect(Math.floor(rand()*28),Math.floor(rand()*28),3+Math.floor(rand()*4),3+Math.floor(rand()*4));}}
+  if(type==="glass"||type==="ice"){
+    ctx.strokeStyle="#e7ffff";ctx.lineWidth=2;ctx.strokeRect(2,2,28,28);ctx.beginPath();ctx.moveTo(5,25);ctx.lineTo(25,5);ctx.stroke();
+  }
+  const tex=new THREE.CanvasTexture(c);
+  tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;
+  tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+for(const type of Object.keys(names)){
+  materials[type]=new THREE.MeshLambertMaterial({map:createTexture(type), ...(["glass","ice"].includes(type)?{transparent:true,opacity:type==="ice"?.72:.42}: {})});
+}
+// Grass blocks use six face materials: green top, dirt bottom, grassy dirt sides.
+function makeGrassFace(kind){
+  const c=document.createElement("canvas");c.width=c.height=32;const ctx=c.getContext("2d");
+  let seed=kind.length*733+0x51a55;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+  if(kind==="top"){
+    ctx.fillStyle="#62a844";ctx.fillRect(0,0,32,32);
+    for(let i=0;i<110;i++){ctx.fillStyle=rand()>.5?"#79bb50":"#4d9137";ctx.fillRect(Math.floor(rand()*32),Math.floor(rand()*32),1+Math.floor(rand()*3),1+Math.floor(rand()*3));}
+  }else{
+    ctx.fillStyle="#87502c";ctx.fillRect(0,0,32,32);
+    for(let i=0;i<85;i++){ctx.fillStyle=rand()>.5?"#99603a":"#704124";ctx.fillRect(Math.floor(rand()*32),Math.floor(rand()*32),2+Math.floor(rand()*4),2+Math.floor(rand()*3));}
+    ctx.fillStyle="#62a844";ctx.fillRect(0,0,32,7);
+    for(let i=0;i<24;i++){ctx.fillStyle=rand()>.5?"#79bb50":"#4d9137";ctx.fillRect(Math.floor(rand()*32),5+Math.floor(rand()*5),1+Math.floor(rand()*3),1+Math.floor(rand()*2));}
+  }
+  const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshLambertMaterial({map:t});
+}
+materials.grass=[makeGrassFace("side"),makeGrassFace("side"),makeGrassFace("top"),materials.dirt,makeGrassFace("side"),makeGrassFace("side")];
+
+const geometry=new THREE.BoxGeometry(1,1,1);
+const blocks=new Map(),meshes=new Map();
+// Performance system: blocks are kept as lightweight records, while visible
+// blocks are rendered in per-chunk InstancedMeshes (one draw call per block type).
+const chunkRenderMeshes=new Map(),dirtyChunkKeys=new Set();
+const blockKey=(x,y,z)=>`${x},${y},${z}`;
+function getBlock(x,y,z){return blocks.get(blockKey(x,y,z));}
+function markChunkDirty(cx,cz){dirtyChunkKeys.add(`${cx},${cz}`);}
+function markBlockChunkDirty(x,z){markChunkDirty(Math.floor(x/CHUNK_SIZE),Math.floor(z/CHUNK_SIZE));}
+function addBlock(x,y,z,type){
+  x=Math.round(x);y=Math.round(y);z=Math.round(z);
+  const k=blockKey(x,y,z);
+  if(blocks.has(k))return false;
+  // Lightweight metadata object; it is not added to the Three.js scene.
+  const record={userData:{x,y,z,type},visible:true};
+  blocks.set(k,type);meshes.set(k,record);markBlockChunkDirty(x,z);
+  return true;
+}
+function blockIsExposed(x,y,z){
+  return !getBlock(x+1,y,z)||!getBlock(x-1,y,z)||!getBlock(x,y+1,z)||!getBlock(x,y-1,z)||!getBlock(x,y,z+1)||!getBlock(x,y,z-1);
+}
+function refreshBlockVisibilityAt(x,y,z){
+  const coords=[[x,y,z],[x+1,y,z],[x-1,y,z],[x,y+1,z],[x,y-1,z],[x,y,z+1],[x,y,z-1]];
+  for(const [bx,by,bz] of coords){
+    const m=meshes.get(blockKey(bx,by,bz));if(m)m.visible=blockIsExposed(bx,by,bz);
+    markBlockChunkDirty(bx,bz);
+  }
+}
+function optimizeChunkVisibility(cx,cz){markChunkDirty(cx,cz);markChunkDirty(cx-1,cz);markChunkDirty(cx+1,cz);markChunkDirty(cx,cz-1);markChunkDirty(cx,cz+1);}
+function removeChunkRenderMeshes(ck){
+  const list=chunkRenderMeshes.get(ck)||[];
+  for(const mesh of list)scene.remove(mesh);
+  chunkRenderMeshes.delete(ck);
+}
+function rebuildChunkMesh(cx,cz){
+  const ck=`${cx},${cz}`;
+  removeChunkRenderMeshes(ck);
+  const minX=cx*CHUNK_SIZE,maxX=minX+CHUNK_SIZE,minZ=cz*CHUNK_SIZE,maxZ=minZ+CHUNK_SIZE;
+  const byType=new Map();
+  for(const [key,type] of blocks){
+    const record=meshes.get(key);if(!record)continue;
+    const p=record.userData;
+    if(p.x<minX||p.x>=maxX||p.z<minZ||p.z>=maxZ||!blockIsExposed(p.x,p.y,p.z))continue;
+    if(!byType.has(type))byType.set(type,[]);
+    byType.get(type).push({key,x:p.x,y:p.y,z:p.z});
+  }
+  const renderList=[];
+  const matrix=new THREE.Matrix4();
+  for(const [type,items] of byType){
+    if(!items.length)continue;
+    const instanced=new THREE.InstancedMesh(geometry,materials[type]||materials.grass,items.length);
+    instanced.name=`chunk ${ck} ${type}`;
+    instanced.userData={chunkKey:ck,blockType:type,instanceKeys:items.map(item=>item.key)};
+    for(let i=0;i<items.length;i++){
+      const item=items[i];matrix.makeTranslation(item.x,item.y,item.z);instanced.setMatrixAt(i,matrix);
+    }
+    instanced.instanceMatrix.needsUpdate=true;
+    instanced.computeBoundingSphere();scene.add(instanced);renderList.push(instanced);
+  }
+  chunkRenderMeshes.set(ck,renderList);
+}
+function flushDirtyChunkMeshes(){
+  if(!dirtyChunkKeys.size)return;
+  // Rebuild only loaded chunks. Unloaded/queued chunks stay dirty until loaded.
+  for(const ck of [...dirtyChunkKeys]){
+    if(!loadedChunks.has(ck))continue;
+    const [cx,cz]=ck.split(',').map(Number);
+    rebuildChunkMesh(cx,cz);dirtyChunkKeys.delete(ck);
+  }
+}
+function getNearbyRenderMeshes(){
+  const cx=Math.floor(player.x/CHUNK_SIZE),cz=Math.floor(player.z/CHUNK_SIZE),out=[];
+  for(let x=cx-1;x<=cx+1;x++)for(let z=cz-1;z<=cz+1;z++)out.push(...(chunkRenderMeshes.get(`${x},${z}`)||[]));
+  return out;
+}
+function removeBlock(x,y,z,refresh=true){
+  const k=blockKey(x,y,z),record=meshes.get(k);
+  if(!record)return false;
+  blocks.delete(k);meshes.delete(k);markBlockChunkDirty(x,z);
+  if(refresh)refreshBlockVisibilityAt(x,y,z);
+  return true;
+}
+// Seeded, effectively endless chunk world. Nearby chunks are loaded as you explore.
+const CHUNK_SIZE=16;
+let CHUNK_RADIUS=3; // configurable render distance; 7x7 starting area is the default
+const SAVE_KEY="classroomSandboxSaveV1";
+const SLOTS_KEY="classroomSandboxWorldSlotsV1";
+const ACTIVE_SLOT_KEY="classroomSandboxActiveSlotV1";
+const START_MODE_KEY="classroomSandboxStartModeV1";
+const START_WORLD_TYPE_KEY="classroomSandboxStartWorldTypeV1";
+const WORLD_TYPE_PREF_KEY="classroomSandboxWorldTypePrefV1";
+const SETTINGS_KEY="classroomSandboxSettingsV1";
+const START_REQUEST_KEY="classroomSandboxStartRequestedV1";
+function readLocal(key){try{return JSON.parse(localStorage.getItem(key)||"null");}catch(_){return null;}}
+const bootSave=readLocal(SAVE_KEY);
+const pendingWorldType=readLocal(START_WORLD_TYPE_KEY);
+try{localStorage.removeItem(START_WORLD_TYPE_KEY);}catch(_){}
+let WORLD_TYPE=(bootSave&&bootSave.worldType==="superflat")?"superflat":(!bootSave&&pendingWorldType==="superflat"?"superflat":"normal");
+let WORLD_SEED=bootSave&&Number.isFinite(bootSave.seed)?bootSave.seed:Math.floor(Math.random()*0x7fffffff);
+const BEDROCK_Y=-14;
+const loadedChunks=new Set();
+const chunkQueue=[];
+const queuedChunks=new Set();
+let activeChunkJob=null;
+// Keep edits in memory while chunks unload/reload during exploration.
+// This is session-only; permanent saving will be added in the save-system phase.
+const worldEdits=new Map(bootSave&&bootSave.edits&&typeof bootSave.edits==="object"?Object.entries(bootSave.edits):[]);
+let lastChunkX=NaN,lastChunkZ=NaN;
+function hashNoise(x,z){
+  let n=(Math.imul(x,374761393)+Math.imul(z,668265263)+Math.imul(WORLD_SEED,1442695041))|0;
+  n=Math.imul(n^(n>>>13),1274126177);n=(n^(n>>>16))>>>0;return n/4294967295;
+}
+function smooth(t){return t*t*(3-2*t);}
+function valueNoise(x,z,scale){
+  const gx=Math.floor(x/scale),gz=Math.floor(z/scale),tx=smooth(x/scale-gx),tz=smooth(z/scale-gz);
+  const a=hashNoise(gx,gz),b=hashNoise(gx+1,gz),c=hashNoise(gx,gz+1),d=hashNoise(gx+1,gz+1);
+  const top=a+(b-a)*tx,bottom=c+(d-c)*tx;return top+(bottom-top)*tz;
+}
+function getBiome(x,z){
+  if(WORLD_TYPE==="superflat")return "plains";
+  const n=valueNoise(x+731,z-419,96);
+  if(n<.13)return "snowy";
+  if(n>.88)return "mushroom";
+  if(n>.78)return "desert";
+  if(n>.66)return "cherry";
+  if(n>.53)return "jungle";
+  if(n>.40)return "forest";
+  return "plains";
+}
+function terrainHeight(x,z){
+  if(WORLD_TYPE==="superflat")return 2;
+  const biome=getBiome(x,z);
+  const broad=valueNoise(x+120,z-80,biome==="desert"?40:28),medium=valueNoise(x-40,z+60,biome==="desert"?20:12),detail=valueNoise(x+15,z+15,4);
+  const mountain=valueNoise(x+1700,z-2100,72);
+  const ridge=Math.max(0,(mountain-.58)*2.4);
+  const height=Math.floor(-1+broad*(biome==="desert"?4:9)+medium*(biome==="desert"?1.8:4.5)+detail*1.5+ridge*13);
+  if(biome==="mushroom")return Math.max(1,height-1);
+  return biome==="desert"?Math.max(1,height):height;
+}
+function makeTree(x,z){
+  const g=terrainHeight(x,z);
+  const biome=getBiome(x,z);
+  if(WORLD_TYPE==="superflat"||!["forest","jungle","cherry"].includes(biome))return;
+  if(Math.abs(x)<4&&Math.abs(z)<4)return;
+  if(g<1)return;
+  const trunk=(biome==="jungle"?5:biome==="cherry"?4:3)+(hashNoise(x+900,z-900)>.65?1:0);
+  const woodType=biome==="cherry"?"cherry_wood":"wood";
+  for(let y=1;y<=trunk;y++)addBlock(x,g+y,z,woodType);
+  for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=trunk-1;dy<=trunk+1;dy++){
+    if(Math.abs(dx)+Math.abs(dz)+Math.abs(dy-trunk)<=4)addBlock(x+dx,g+dy,z+dz,"leaves");
+  }
+}
+// Friendly voxel pigs with generated pixel textures, ears, eyes and a detailed snout.
+// Textures are procedural/local: no remote assets or external requests are required.
+const mobs=[];
+const pigBodyMat=pixelMaterial("#e6a1ad",["#f3bac3","#d98999","#e8a6b1","#c97889","#f0b1bb"],912,150);
+const pigHeadMat=pixelMaterial("#e8a4b0",["#f5c1c8","#d98a9a","#e7a0ae","#ca7888"],913,95);
+const pigLegMat=pixelMaterial("#bd7483",["#d58b99","#a95f70","#e0a0aa"],914,65);
+const pigSnoutMat=pixelMaterial("#f2b5bf",["#ffd0d6","#df8999","#e99aaa"],915,50);
+const pigEyeMat=new THREE.MeshLambertMaterial({color:0x2a2024});
+const pigNostrilMat=new THREE.MeshLambertMaterial({color:0x713b48});
+const cowBodyMat=pixelMaterial("#e7e0d1",["#ffffff","#b77a4d","#3a2a22","#d6c9b6"],951,90);
+const sheepBodyMat=pixelMaterial("#e9e7e0",["#ffffff","#d4d3ce","#c2c0ba"],952,65);
+const cowHeadMat=pixelMaterial("#dfc6a7",["#f0ddc2","#b77a4d","#3a2a22"],953,55);
+function spawnMob(x,z,kind){
+  kind=kind||(["pig","cow","sheep"][Math.floor(Math.random()*3)]);
+  const y=terrainHeight(x,z)+.5;const group=new THREE.Group();
+  const bodyMat=kind==="cow"?cowBodyMat:kind==="sheep"?sheepBodyMat:pigBodyMat;
+  const headMat=kind==="cow"?cowHeadMat:kind==="sheep"?sheepBodyMat:pigHeadMat;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(kind==="cow"?1:.85,.55,.5),bodyMat);body.position.y=.55;group.add(body);
+  const head=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,.38),headMat);head.position.set(0,.76,-.38);group.add(head);
+  // Snout projects from the front of the head; two dark pixel nostrils make the face readable.
+  const snout=new THREE.Mesh(new THREE.BoxGeometry(.23,.16,.105),kind==="cow"?cowHeadMat:pigSnoutMat);snout.position.set(0,.69,-.615);group.add(snout);
+  for(const nx of [-.055,.055]){const nostril=new THREE.Mesh(new THREE.BoxGeometry(.035,.055,.012),pigNostrilMat);nostril.position.set(nx,.69,-.674);group.add(nostril);}
+  if(kind==="cow"){for(const hx of [-.16,.16]){const horn=new THREE.Mesh(new THREE.BoxGeometry(.07,.15,.07),new THREE.MeshLambertMaterial({color:0xe8dfc7}));horn.position.set(hx,.99,-.36);group.add(horn);}}
+  // Small upright ears.
+  for(const ex of [-.14,.14]){const ear=new THREE.Mesh(new THREE.BoxGeometry(.105,.15,.12),pigHeadMat);ear.position.set(ex,.99,-.36);group.add(ear);}
+  // Eyes sit on both visible sides of the head.
+  for(const side of [-1,1]){const eye=new THREE.Mesh(new THREE.BoxGeometry(.045,.055,.018),pigEyeMat);eye.position.set(side*.205,.81,-.46);group.add(eye);}
+  const legMat=kind==="cow"?cowHeadMat:kind==="sheep"?sheepBodyMat:pigLegMat;
+  for(const lx of [-.25,.25])for(const lz of [-.15,.15]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.14,.3,.14),legMat);leg.position.set(lx,.18,lz);group.add(leg);}
+  group.position.set(x,y,z);scene.add(group);mobs.push({group,x,z,kind,dir:Math.random()*Math.PI*2,changeAt:performance.now()+1000+Math.random()*4000});
+}
+function updateMobs(now,dt){
+  // Spawn a few animals once around the starting area; never spam new mobs.
+  if(mobs.length<5&&loadedChunks.size>=1&&now>nextMobSpawn){const angle=Math.random()*Math.PI*2,dist=5+Math.random()*9;const x=Math.round(player.x+Math.cos(angle)*dist),z=Math.round(player.z+Math.sin(angle)*dist);spawnMob(x,z,["pig","cow","sheep"][Math.floor(Math.random()*3)]);nextMobSpawn=now+4500;}
+  for(const m of mobs){if(now>m.changeAt){m.dir+=(Math.random()-.5)*2.4;m.changeAt=now+1300+Math.random()*3600;}
+    if(Math.hypot(m.x-player.x,m.z-player.z)>CHUNK_RADIUS*CHUNK_SIZE+8)continue;
+    const nx=m.x+Math.sin(m.dir)*dt*.65,nz=m.z+Math.cos(m.dir)*dt*.65;
+    const ground=terrainHeight(Math.round(nx),Math.round(nz));
+    if(Math.abs(ground-terrainHeight(Math.round(m.x),Math.round(m.z)))<=1){m.x=nx;m.z=nz;m.group.position.set(m.x,ground+.5,m.z);m.group.rotation.y=m.dir;}
+  }
+}
+let nextMobSpawn=performance.now()+2500;
+function chunkKey(cx,cz){return `${cx},${cz}`;}
+function generateChunk(cx,cz){
+  const ck=chunkKey(cx,cz);
+  if(loadedChunks.has(ck)||queuedChunks.has(ck))return;
+  queuedChunks.add(ck);
+  chunkQueue.push({cx,cz,ck,column:0,trees:[]});
+}
+function finishChunk(job){
+  const {cx,cz,ck,trees}=job;
+  for(const [tx,tz] of trees)makeTree(tx,tz);
+  // Reapply this session's edits after generating natural terrain and trees.
+  const minX=cx*CHUNK_SIZE,maxX=minX+CHUNK_SIZE,minZ=cz*CHUNK_SIZE,maxZ=minZ+CHUNK_SIZE;
+  for(const [k,type] of worldEdits){
+    const parts=k.split(',').map(Number),x=parts[0],y=parts[1],z=parts[2];
+    if(x<minX||x>=maxX||z<minZ||z>=maxZ)continue;
+    if(type===null){removeBlock(x,y,z);}
+    else{
+      const current=getBlock(x,y,z);
+      if(current&&current!==type)removeBlock(x,y,z);
+      if(!getBlock(x,y,z))addBlock(x,y,z,type);
+    }
+  }
+  loadedChunks.add(ck);
+  optimizeChunkVisibility(cx,cz);
+  queuedChunks.delete(ck);
+}
+// Generate only a small batch of terrain columns per frame so chunk creation
+// doesn't freeze touch input or camera movement on slower devices.
+function processChunkQueue(){
+  if(!activeChunkJob){
+    if(!chunkQueue.length)return;
+    activeChunkJob=chunkQueue.shift();
+  }
+  const job=activeChunkJob;
+  const startX=job.cx*CHUNK_SIZE,startZ=job.cz*CHUNK_SIZE;
+  const columnsPerFrame=8;
+  for(let n=0;n<columnsPerFrame&&job.column<CHUNK_SIZE*CHUNK_SIZE;n++,job.column++){
+    const x=startX+Math.floor(job.column/CHUNK_SIZE);
+    const z=startZ+(job.column%CHUNK_SIZE);
+    const top=terrainHeight(x,z);
+    const biome=getBiome(x,z);
+    for(let y=BEDROCK_Y;y<=top;y++){
+      let type;
+      if(y===BEDROCK_Y)type="bedrock";
+      else if(y===top)type=biome==="desert"?"sand":biome==="snowy"?"snow":biome==="mushroom"?"mushroom_block":(top<=0?"sand":"grass");
+      else if(biome==="desert"&&y>=top-3)type="sand";
+      else if(biome==="mushroom"&&y>=top-4)type="clay";
+      else if(y>=top-2)type="dirt";
+      else{
+        type="stone";
+        const ore=hashNoise(x*13+y*7,z*11-y*5);
+        if(y<-11&&ore>.996)type="ancient_debris";
+        else if(y<-8&&ore>.992)type="diamond";
+        else if(y<-6&&ore>.976)type="gold";
+        else if(y<-3&&ore>.969)type="amethyst";
+        else if(ore>.957)type="copper";
+        else if(ore>.951)type="iron";
+        else if(ore>.925)type="coal";
+        if(biome==="jungle"&&ore>.997)type="emerald";
+      }
+      const cave=valueNoise(x+y*3,z-y*2,5);
+      if(WORLD_TYPE!=="superflat"&&y<top-2&&y>BEDROCK_Y&&cave>.79&&hashNoise(x+y,z-y)>.32)continue;
+      addBlock(x,y,z,type);
+    }
+    if(WORLD_TYPE!=="superflat"&&biome==="forest"&&x>=startX+3&&x<startX+CHUNK_SIZE-3&&z>=startZ+3&&z<startZ+CHUNK_SIZE-3&&hashNoise(x+450,z+700)>.94)job.trees.push([x,z]);
+  }
+  if(job.column>=CHUNK_SIZE*CHUNK_SIZE){
+    finishChunk(job);
+    activeChunkJob=null;
+    status.textContent=`Generating world · ${loadedChunks.size} chunks ready · Seed ${WORLD_SEED}`;
+  }
+}
+
+function unloadChunk(cx,cz){
+  const ck=chunkKey(cx,cz);if(!loadedChunks.has(ck))return;
+  const minX=cx*CHUNK_SIZE,maxX=minX+CHUNK_SIZE,minZ=cz*CHUNK_SIZE,maxZ=minZ+CHUNK_SIZE;
+  for(const [k,record] of meshes){
+    const x=record.userData.x,z=record.userData.z;
+    if(x>=minX&&x<maxX&&z>=minZ&&z<maxZ){meshes.delete(k);blocks.delete(k);}
+  }
+  removeChunkRenderMeshes(ck);dirtyChunkKeys.delete(ck);
+  loadedChunks.delete(ck);
+  // Reveal faces on neighboring chunks that were hidden by the chunk just unloaded.
+  for(let y=BEDROCK_Y;y<48;y++)for(let i=0;i<CHUNK_SIZE;i++){
+    refreshBlockVisibilityAt(minX-1,y,minZ+i);refreshBlockVisibilityAt(maxX,y,minZ+i);
+    refreshBlockVisibilityAt(minX+i,y,minZ-1);refreshBlockVisibilityAt(minX+i,y,maxZ);
+  }
+  markChunkDirty(cx-1,cz);markChunkDirty(cx+1,cz);markChunkDirty(cx,cz-1);markChunkDirty(cx,cz+1);
+}
+function updateChunks(force=false){
+  const cx=Math.floor(player.x/CHUNK_SIZE),cz=Math.floor(player.z/CHUNK_SIZE);
+  if(!force&&cx===lastChunkX&&cz===lastChunkZ)return;
+  lastChunkX=cx;lastChunkZ=cz;
+  const wanted=[];
+  for(let x=cx-CHUNK_RADIUS;x<=cx+CHUNK_RADIUS;x++)for(let z=cz-CHUNK_RADIUS;z<=cz+CHUNK_RADIUS;z++)wanted.push({x,z,d:(x-cx)*(x-cx)+(z-cz)*(z-cz)});
+  wanted.sort((a,b)=>a.d-b.d);
+  for(const c of wanted)generateChunk(c.x,c.z);
+  for(const ck of [...loadedChunks]){const [x,z]=ck.split(',').map(Number);if(Math.abs(x-cx)>CHUNK_RADIUS||Math.abs(z-cz)>CHUNK_RADIUS)unloadChunk(x,z);}
+  // Drop queued jobs that are no longer near the player; an already-active job
+  // finishes safely, then the queue prioritizes the closest remaining chunks.
+  for(let i=chunkQueue.length-1;i>=0;i--){
+    const job=chunkQueue[i];
+    if(Math.abs(job.cx-cx)>CHUNK_RADIUS||Math.abs(job.cz-cz)>CHUNK_RADIUS){chunkQueue.splice(i,1);queuedChunks.delete(job.ck);}
+  }
+  chunkQueue.sort((a,b)=>((a.cx-cx)**2+(a.cz-cz)**2)-((b.cx-cx)**2+(b.cz-cz)**2));
+  status.textContent=`Loading nearby chunks · ${loadedChunks.size} ready · Seed ${WORLD_SEED}`;
+}
+// Chunks are deliberately NOT queued at page load. Start preloads the 30 nearest chunks.
+let loadingWorld=false;
+let preloadTarget=30;
+function queueSpawnSquare(){
+  chunkQueue.length=0;queuedChunks.clear();activeChunkJob=null;
+  const radius=3;
+  const centerX=Math.floor(player.x/CHUNK_SIZE),centerZ=Math.floor(player.z/CHUNK_SIZE);
+  const candidates=[];
+  for(let cx=centerX-radius;cx<=centerX+radius;cx++){
+    for(let cz=centerZ-radius;cz<=centerZ+radius;cz++){
+      candidates.push({cx,cz,distance:(cx-centerX)**2+(cz-centerZ)**2});
+    }
+  }
+  candidates.sort((a,b)=>a.distance-b.distance);
+  candidates.slice(0,preloadTarget).forEach(({cx,cz})=>generateChunk(cx,cz));
+  chunkQueue.sort((a,b)=>((a.cx-centerX)**2+(a.cz-centerZ)**2)-((b.cx-centerX)**2+(b.cz-centerZ)**2));
+}
+
+const player={x:0,y:8,z:0,vx:0,vy:0,vz:0,yaw:0,pitch:0,grounded:false,height:1.8,radius:.29};
+const avatar=new THREE.Group();scene.add(avatar);
+// Textured player clothing/skin instead of flat-color boxes.
+const skin=pixelMaterial("#e1b28a",["#f0c49b","#d6a078","#e8b58b","#c99570"],721,55);
+const shirt=pixelMaterial("#2877cf",["#3d91e8","#1e5eaa","#2e7bd0","#69afea"],722,90);
+const pants=pixelMaterial("#333c58",["#485878","#252e47","#3b4969","#596785"],723,80);
+const hair=pixelMaterial("#493020",["#63412a","#352318","#795037","#41291b"],724,70);
+const shoes=pixelMaterial("#292929",["#414141","#1d1d1d","#555555"],725,45);
+function part(w,h,d,mat,x,y,z){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  m.position.set(x,y,z);avatar.add(m);return m;
+}
+part(.62,.65,.34,shirt,0,1.12,0);
+part(.38,.4,.36,skin,0,1.68,0);
+part(.4,.12,.38,hair,0,1.88,0);
+const armL=part(.2,.62,.22,shirt,-.42,1.13,0);
+const armR=part(.2,.62,.22,shirt,.42,1.13,0);
+const legL=part(.25,.56,.26,pants,-.17,.56,0);
+const legR=part(.25,.56,.26,pants,.17,.56,0);
+part(.27,.15,.35,shoes,-.17,.14,-.04);
+part(.27,.15,.35,shoes,.17,.14,-.04);
+
+function collides(px,py,pz){
+  const r=player.radius;
+  const minX=Math.floor(px-r+.5),maxX=Math.floor(px+r+.5);
+  const minY=Math.floor(py+.0001+.5),maxY=Math.floor(py+player.height-.0001+.5);
+  const minZ=Math.floor(pz-r+.5),maxZ=Math.floor(pz+r+.5);
+  for(let x=minX;x<=maxX;x++)for(let y=minY;y<=maxY;y++)for(let z=minZ;z<=maxZ;z++){
+    if(!getBlock(x,y,z))continue;
+    if(px+r>x-.5&&px-r<x+.5&&py<y+.5&&py+player.height>y-.5&&pz+r>z-.5&&pz-r<z+.5)return true;
+  }
+  return false;
+}
+function respawn(){
+  player.x=0;player.z=0;player.y=terrainHeight(0,0)+.501;
+  player.vx=player.vy=player.vz=0;player.grounded=false;player.yaw=0;player.pitch=0;
+}
+respawn();
+if(bootSave&&bootSave.player&&Number.isFinite(bootSave.player.x)&&Number.isFinite(bootSave.player.z)){
+  player.x=bootSave.player.x;player.z=bootSave.player.z;
+  player.y=Number.isFinite(bootSave.player.y)?bootSave.player.y:terrainHeight(player.x,player.z)+.501;
+  player.yaw=Number.isFinite(bootSave.player.yaw)?bootSave.player.yaw:0;
+  player.pitch=Number.isFinite(bootSave.player.pitch)?bootSave.player.pitch:0;
+}
+let pendingStartMode=readLocal(START_MODE_KEY);
+try{localStorage.removeItem(START_MODE_KEY);}catch(_){}
+let gameMode=(pendingStartMode==="survival" || (!pendingStartMode && bootSave&&bootSave.mode==="survival"))?"survival":"creative";
+const inventory={};
+for(const type of Object.keys(names))inventory[type]=0;
+const stationStorage=bootSave&&bootSave.stationStorage&&typeof bootSave.stationStorage==="object"?JSON.parse(JSON.stringify(bootSave.stationStorage)):{};
+let activeStationKey=null,activeStationType=null;
+inventory.planks=0;inventory.sticks=0;inventory.pork=0;inventory.beef=0;inventory.leather=0;inventory.wool=0;inventory.apple=0;inventory.copper_ingot=0;inventory.iron_ingot=0;inventory.amethyst_shard=0;inventory.emerald_item=0;inventory.shield=0;inventory.iron_helmet=0;inventory.iron_chestplate=0;inventory.iron_leggings=0;inventory.iron_boots=0;
+for(const item of ["wooden_pickaxe","stone_pickaxe","wooden_axe","wooden_shovel","beef","leather","wool","copper_ingot","iron_ingot","amethyst_shard","emerald_item","shield","iron_helmet","iron_chestplate","iron_leggings","iron_boots"])if(!Number.isFinite(inventory[item]))inventory[item]=0;
+if(bootSave&&bootSave.inventory&&typeof bootSave.inventory==="object"){
+  for(const key of Object.keys(inventory))if(Number.isFinite(bootSave.inventory[key]))inventory[key]=Math.max(0,Math.floor(bootSave.inventory[key]));
+}
+let health=bootSave&&Number.isFinite(bootSave.health)?THREE.MathUtils.clamp(bootSave.health,1,20):20;
+let hunger=bootSave&&Number.isFinite(bootSave.hunger)?THREE.MathUtils.clamp(bootSave.hunger,0,20):20;
+let hungerClock=0,damageClock=0;
+const survivalHud=document.getElementById("survivalHud");
+function refreshModeUI(){
+  const survival=gameMode==="survival";
+  survivalHud.style.display=survival?"block":"none";
+  document.getElementById("modeBtn").textContent=survival?"❤️ Survival":"🛠 Creative";
+  document.getElementById("modeMenuBtn").textContent=survival?"Switch to Creative":"Switch to Survival";
+  document.getElementById("healthValue").textContent=Math.ceil(health);
+  document.getElementById("hungerValue").textContent=Math.ceil(hunger);
+  const heartCount=Math.ceil(health/2),foodCount=Math.ceil(hunger/2);
+  document.getElementById("healthIcons").textContent=Array.from({length:10},(_,i)=>i<heartCount?(health%2===1&&i===heartCount-1?"💔":"❤️"):"🖤").join("");
+  document.getElementById("hungerIcons").textContent=Array.from({length:10},(_,i)=>i<foodCount?"🍗":"▫️").join("");
+  refreshInventoryUI();
+}
+const itemIcons={grass:"🟩",dirt:"🟫",stone:"🪨",sand:"🟨",wood:"🪵",leaves:"🌿",planks:"🪵",cobble:"🧱",bricks:"🧱",glass:"🔹",snow:"❄️",coal:"⚫",iron:"⛏️",gold:"🟡",diamond:"💎",bedrock:"⬛",crafting_table:"🧰",bed:"🛏️",torch:"🔥",chest:"📦",furnace:"🔥",sticks:"🪄",pork:"🍖",beef:"🥩",leather:"🟫",wool:"🧶",apple:"🍎",iron_ingot:"🔩",wooden_pickaxe:"⛏️",stone_pickaxe:"⛏️",wooden_axe:"🪓",wooden_shovel:"🥄",copper:"🟠",amethyst:"🔮",emerald:"💚",obsidian:"🟪",netherrack:"🟥",glowstone:"✨",prismarine:"🌊",ice:"🧊",concrete:"⬜",cherry_wood:"🌸",mangrove_wood:"🪵",mushroom_block:"🍄",clay:"🩶",ancient_debris:"🟤",shield:"🛡️",iron_helmet:"⛑️",iron_chestplate:"🦺",iron_leggings:"👖",iron_boots:"🥾",copper_ingot:"🟠",amethyst_shard:"🔮",emerald_item:"💚"};
+let hotbarTypes=["grass","dirt","stone","wood","planks","cobble","sand","bricks","glass"];
+function refreshInventoryUI(){
+  const labels={...names,planks:"Wooden Planks",sticks:"Sticks",pork:"Porkchop",beef:"Raw Beef",leather:"Leather",wool:"Wool",apple:"Apple",iron_ingot:"Iron Ingot",wooden_pickaxe:"Wooden Pickaxe",stone_pickaxe:"Stone Pickaxe",wooden_axe:"Wooden Axe",wooden_shovel:"Wooden Shovel",copper_ingot:"Copper Ingot",amethyst_shard:"Amethyst Shard",emerald_item:"Emerald",shield:"Shield",iron_helmet:"Iron Helmet",iron_chestplate:"Iron Chestplate",iron_leggings:"Iron Leggings",iron_boots:"Iron Boots"};
+  const lines=[];
+  for(const [type,count] of Object.entries(inventory))if(count>0&&labels[type])lines.push(`${labels[type]}: ${count}`);
+  const text=(gameMode==="creative"?"Creative: blocks are unlimited. Switch to Survival to collect and spend items.\n\n":"")+(lines.length?lines.join("\n"):"Your inventory is empty. Break blocks in Survival to collect resources.");
+  const el=document.getElementById("inventoryText");if(el)el.textContent=text;
+  const craftEl=document.getElementById("craftInventoryText");if(craftEl)craftEl.textContent=lines.length?lines.join("\n"):"Your inventory is empty.";
+  const hotbar=document.getElementById("palette");
+  if(hotbar){hotbar.innerHTML="";for(const type of hotbarTypes){const btn=document.createElement("button");btn.className="block-choice"+(type===selected?" selected":"");btn.setAttribute("aria-label","Select "+names[type]);const swatch=document.createElement("span");swatch.className="swatch";swatch.style.backgroundColor="#"+colors[type].toString(16).padStart(6,"0");const label=document.createElement("span");label.textContent=names[type];btn.append(swatch,label);if(gameMode==="survival"){const count=document.createElement("span");count.className="slot-count";count.textContent=inventory[type]||0;btn.append(count);}btn.addEventListener("click",()=>{selected=type;refreshInventoryUI();status.textContent="Selected "+names[type]+".";beep(520,.04,"sine",.025);});hotbar.appendChild(btn);}}
+  const grid=document.getElementById("inventoryGrid");
+  if(grid){grid.innerHTML="";const allItems=[...Object.keys(names),"planks","sticks","pork","beef","leather","wool","apple","wooden_pickaxe","stone_pickaxe","wooden_axe","wooden_shovel","copper_ingot","iron_ingot","amethyst_shard","emerald_item","shield","iron_helmet","iron_chestplate","iron_leggings","iron_boots"];const seen=new Set();for(const type of allItems){if(seen.has(type))continue;seen.add(type);const count=inventory[type]||0;const btn=document.createElement("button");btn.className="inventory-slot";btn.innerHTML="<span class=\"item-icon\"></span><span></span><span class=\"item-count\"></span>";btn.querySelector(".item-icon").textContent=itemIcons[type]||"📦";btn.querySelector("span:nth-child(2)").textContent=labels[type]||type;btn.querySelector(".item-count").textContent=count;const placeable=Object.prototype.hasOwnProperty.call(names,type)&&!(["bedrock"].includes(type));btn.disabled=gameMode==="survival"&&count<1;if(placeable){btn.addEventListener("click",()=>{if(!hotbarTypes.includes(type))hotbarTypes[8]=type;selected=type;refreshInventoryUI();document.getElementById("inventoryMessage").textContent="Equipped "+(names[type]||type)+" in the hotbar.";status.textContent="Selected "+names[type]+".";closeInventory();});}else{btn.title="Inventory item";}grid.appendChild(btn);}}
+}
+function toggleMode(){gameMode=gameMode==="creative"?"survival":"creative";refreshModeUI();status.textContent=gameMode==="survival"?"Survival mode enabled. Watch your hunger!":"Creative mode enabled.";menuMessage.textContent=status.textContent;}
+
+const keys=new Set();
+const touch={forward:0,back:0,left:0,right:0};
+const joystick={active:false,pointerId:null,x:0,y:0};
+const movementPad=document.getElementById("movement");
+const stick=document.getElementById("stick");
+function resetJoystick(){
+  joystick.active=false;joystick.pointerId=null;
+  touch.forward=touch.back=touch.left=touch.right=0;
+  stick.style.left="50%";stick.style.top="50%";
+}
+function updateJoystick(e){
+  const rect=movementPad.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  const max=rect.width*.34;
+  let dx=e.clientX-cx,dy=e.clientY-cy;
+  const distance=Math.hypot(dx,dy);
+  if(distance>max){dx=dx/distance*max;dy=dy/distance*max;}
+  stick.style.left=`calc(50% + ${dx}px)`;
+  stick.style.top=`calc(50% + ${dy}px)`;
+  const nx=dx/max,ny=dy/max;
+  touch.left=Math.max(0,-nx);touch.right=Math.max(0,nx);
+  touch.forward=Math.max(0,-ny);touch.back=Math.max(0,ny);
+}
+const touchToggleBtn=document.getElementById("touchToggleBtn");
+function toggleTouchControls(){
+  const hidden=document.body.classList.toggle("touch-controls-hidden");
+  touchToggleBtn.textContent=hidden?"Touch Controls: Off (H)":"Touch Controls: On (H)";
+  touchToggleBtn.setAttribute("aria-pressed",String(!hidden));
+  if(hidden)resetJoystick();
+}
+touchToggleBtn.addEventListener("click",toggleTouchControls);
+movementPad.addEventListener("pointerdown",e=>{
+  e.preventDefault();joystick.active=true;joystick.pointerId=e.pointerId;
+  try{movementPad.setPointerCapture(e.pointerId);}catch(_){}
+  updateJoystick(e);
+});
+movementPad.addEventListener("pointermove",e=>{
+  if(joystick.active&&e.pointerId===joystick.pointerId){e.preventDefault();updateJoystick(e);}
+});
+function endJoystick(e){
+  if(joystick.active&&(e.pointerId===undefined||e.pointerId===joystick.pointerId))resetJoystick();
+}
+movementPad.addEventListener("pointerup",endJoystick);
+movementPad.addEventListener("pointercancel",endJoystick);
+movementPad.addEventListener("lostpointercapture",endJoystick);
+window.addEventListener("keydown",e=>{
+  if(craftOverlay.style.display==="block"){if(e.key==="Escape")closeCrafting();return;}
+  if(inventoryOverlay.style.display==="block"){if(e.key==="Escape")closeInventory();return;}
+  if(stationOverlay.style.display==="block"){if(e.key==="Escape")closeStation();return;}
+  if(menuOverlay.style.display==="block"){if(e.key==="Escape")closeMenu();return;}
+  const k=e.key.toLowerCase();
+  if(k==="h"){toggleTouchControls();return;}
+  if(k==="c"){openCrafting();return;}
+  if(k==="i"){openInventory();return;}
+  if(k==="m"){openMenu();return;}
+  keys.add(k);
+  if([" ","arrowup","arrowdown","arrowleft","arrowright"].includes(k))e.preventDefault();
+  if(k===" "&&!e.repeat)jump();
+  if(k==="f")breakBlock();
+  if(k==="g")placeBlock();
+  if(k==="e")collectNearbyPig();
+  if(k==="r")eatFood();
+  if(k==="v")toggleCamera();
+});
+window.addEventListener("keyup",e=>keys.delete(e.key.toLowerCase()));
+window.addEventListener("blur",()=>{
+  keys.clear();resetJoystick();
+});
+
+let soundOn=true,audio=null;
+function beep(freq,duration,wave="square",volume=.04){
+  if(!soundOn)return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    if(!audio)audio=new AC();
+    if(audio.state==="suspended")audio.resume();
+    const osc=audio.createOscillator(),gain=audio.createGain();
+    osc.type=wave;osc.frequency.value=freq;
+    gain.gain.setValueAtTime(volume,audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+    osc.connect(gain);gain.connect(audio.destination);
+    osc.start();osc.stop(audio.currentTime+duration);
+  }catch(_){}
+}
+// Secret movement ritual: 20 jump presses within ten seconds summon Herobrine.
+let jumpRitualCount=0;
+let jumpRitualStartedAt=0;
+function registerJumpRitual(){
+  if(!gameStarted||nightmareActive)return;
+  const now=performance.now();
+  if(!jumpRitualStartedAt||now-jumpRitualStartedAt>10000){
+    jumpRitualStartedAt=now;
+    jumpRitualCount=0;
+  }
+  jumpRitualCount++;
+  if(jumpRitualCount>=20){
+    jumpRitualCount=0;
+    jumpRitualStartedAt=0;
+    status.textContent="You performed the secret jump ritual...";
+    startNightmare();
+  }
+}
+function jump(){
+  registerJumpRitual();
+  if(player.grounded){player.vy=8.2;player.grounded=false;beep(280,.12,"triangle");}
+}
+document.getElementById("jump").addEventListener("pointerdown",e=>{e.preventDefault();jump();});
+
+let thirdPerson=false,dragging=false,lastX=0,lastY=0;
+renderer.domElement.addEventListener("contextmenu",e=>e.preventDefault());
+renderer.domElement.addEventListener("pointerdown",e=>{
+  if(e.pointerType==="mouse"){
+    if(e.button===0)breakBlock();
+    if(e.button===2)placeBlock();
+    return;
+  }
+  dragging=true;lastX=e.clientX;lastY=e.clientY;
+  try{renderer.domElement.setPointerCapture(e.pointerId);}catch(_){}
+});
+renderer.domElement.addEventListener("pointermove",e=>{
+  if(e.pointerType==="mouse"&&document.pointerLockElement===renderer.domElement){
+    player.yaw-=e.movementX*.0025;
+    player.pitch=THREE.MathUtils.clamp(player.pitch-e.movementY*.0025,-1.553,1.553);
+    return;
+  }
+  if(!dragging||e.pointerType==="mouse")return;
+  const dx=e.clientX-lastX,dy=e.clientY-lastY;
+  lastX=e.clientX;lastY=e.clientY;
+  player.yaw-=dx*.0045;
+  player.pitch=THREE.MathUtils.clamp(player.pitch-dy*.004,-1.553,1.553);
+});
+renderer.domElement.addEventListener("pointerup",()=>dragging=false);
+renderer.domElement.addEventListener("pointercancel",()=>dragging=false);
+renderer.domElement.addEventListener("click",()=>{
+  if(matchMedia("(pointer:fine)").matches&&!thirdPerson&&document.pointerLockElement!==renderer.domElement){
+    renderer.domElement.requestPointerLock?.();
+  }
+});
+
+const raycaster=new THREE.Raycaster(),center=new THREE.Vector2(0,0);
+function getTarget(){
+  raycaster.setFromCamera(center,camera);raycaster.far=6;
+  const hits=raycaster.intersectObjects(getNearbyRenderMeshes(),false);
+  if(!hits.length)return null;
+  const hit=hits[0];
+  const key=hit.object.userData.instanceKeys?.[hit.instanceId];
+  const record=key?meshes.get(key):null;
+  if(!record)return null;
+  hit.blockData=record.userData;
+  return hit;
+}
+function breakBlock(){
+  const hit=getTarget();
+  if(!hit){status.textContent="Aim at a block within reach.";return;}
+  const p=hit.blockData||hit.object.userData;
+  if(gameMode==="survival"&&p.type==="bedrock"){status.textContent="Bedrock can't be mined in Survival.";return;}
+  if(gameMode==="survival"){
+    const oreTypes=["iron","gold","diamond","copper","emerald","ancient_debris"];
+    const pickTypes=["stone","cobble","bricks","coal","amethyst"];
+    if(oreTypes.includes(p.type)&&inventory.stone_pickaxe<1){status.textContent="You need a Stone Pickaxe to mine this ore. Craft one in 🧰 Craft.";return;}
+    if(pickTypes.includes(p.type)&&inventory.wooden_pickaxe<1&&inventory.stone_pickaxe<1){status.textContent="You need a Pickaxe to mine this block. Craft a Wooden Pickaxe in 🧰 Craft.";return;}
+  }
+  const removedKey=blockKey(p.x,p.y,p.z);
+  if(["chest","furnace"].includes(p.type)&&stationStorage[removedKey]){for(const [item,count] of Object.entries(stationStorage[removedKey]))inventory[item]=(inventory[item]||0)+count;delete stationStorage[removedKey];}
+  removeBlock(p.x,p.y,p.z);worldEdits.set(removedKey,null);
+  if(gameMode==="survival"){
+    if(p.type==="stone")inventory.cobble=(inventory.cobble||0)+1;
+    else if(p.type==="copper")inventory.copper_ingot=(inventory.copper_ingot||0)+1;
+    else if(p.type==="amethyst")inventory.amethyst_shard=(inventory.amethyst_shard||0)+2;
+    else if(p.type==="emerald")inventory.emerald_item=(inventory.emerald_item||0)+1;
+    else inventory[p.type]=(inventory[p.type]||0)+1;
+    // Correct tools reward extra materials, while basic blocks remain collectable by hand.
+    if(p.type==="wood"&&inventory.wooden_axe>0)inventory[p.type]++;
+    if(["grass","dirt","sand","snow"].includes(p.type)&&inventory.wooden_shovel>0)inventory[p.type]++;
+    if(p.type==="leaves"&&Math.random()<.18)inventory.apple++;
+    refreshInventoryUI();
+  }
+  beep(115,.09);
+  status.textContent=gameMode==="survival"?`Collected ${names[p.type]} ×1.`:`Broke ${names[p.type]}.`;
+}
+let selected="grass";
+function placeBlock(){
+  const hit=getTarget();
+  if(!hit||!hit.face){status.textContent="Aim at a block within reach.";return;}
+  const p=hit.blockData||hit.object.userData;
+  const n=hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+  const x=Math.round(p.x+n.x),y=Math.round(p.y+n.y),z=Math.round(p.z+n.z);
+  const overlapsPlayer=x+.5>player.x-player.radius&&x-.5<player.x+player.radius&&
+    z+.5>player.z-player.radius&&z-.5<player.z+player.radius&&
+    y+.5>player.y&&y-.5<player.y+player.height;
+  if(overlapsPlayer){status.textContent="Move away to place that block.";return;}
+  if(gameMode==="survival"&&(inventory[selected]||0)<1){status.textContent=`No ${names[selected]} in your inventory. Break blocks to collect them.`;return;}
+  if(addBlock(x,y,z,selected)){
+    refreshBlockVisibilityAt(x,y,z);
+    worldEdits.set(blockKey(x,y,z),selected);
+    if(gameMode==="survival"){inventory[selected]--;refreshInventoryUI();}
+    beep(420,.07,"triangle");status.textContent="Placed "+names[selected]+".";
+  }
+}
+document.getElementById("breakBtn").addEventListener("pointerdown",e=>{e.preventDefault();breakBlock();});
+document.getElementById("placeBtn").addEventListener("pointerdown",e=>{e.preventDefault();placeBlock();});
+function collectNearbyPig(){
+  const aimed=getTarget();
+  if(aimed&&["chest","furnace"].includes((aimed.blockData||aimed.object.userData).type)){const p=aimed.blockData||aimed.object.userData;openStation(p.type,blockKey(p.x,p.y,p.z));return;}
+  if(gameMode!=="survival"){status.textContent="Switch to Survival to collect food.";return;}
+  let best=-1,bestD=3.2;
+  for(let i=0;i<mobs.length;i++){const m=mobs[i],d=Math.hypot(m.x-player.x,m.z-player.z);if(d<bestD){best=i;bestD=d;}}
+  if(best<0){status.textContent="Move closer to an animal to collect its resources.";return;}
+  const m=mobs[best];scene.remove(m.group);mobs.splice(best,1);
+  if(m.kind==="cow"){inventory.beef=(inventory.beef||0)+1;inventory.leather=(inventory.leather||0)+1;status.textContent="Collected raw beef and leather from a cow.";}
+  else if(m.kind==="sheep"){inventory.wool=(inventory.wool||0)+2;status.textContent="Collected 2 wool from a sheep.";}
+  else{inventory.pork=(inventory.pork||0)+1;status.textContent="Collected a porkchop from a pig.";}
+  refreshInventoryUI();beep(340,.12,"triangle");
+}
+function eatFood(){
+  if(gameMode!=="survival"){status.textContent="Food is only needed in Survival.";return;}
+  if(hunger>=20){status.textContent="Your hunger is already full.";return;}
+  if(inventory.pork>0){inventory.pork--;hunger=Math.min(20,hunger+7);status.textContent="Ate porkchop · hunger +7.";}
+  else if(inventory.beef>0){inventory.beef--;hunger=Math.min(20,hunger+6);status.textContent="Ate raw beef · hunger +6.";}
+  else if(inventory.apple>0){inventory.apple--;hunger=Math.min(20,hunger+4);status.textContent="Ate apple · hunger +4.";}
+  else{status.textContent="No food! Collect a nearby pig or cow, or break leaves for a chance at an apple.";return;}
+  refreshModeUI();beep(620,.12,"sine");
+}
+document.getElementById("useBtn").addEventListener("pointerdown",e=>{e.preventDefault();collectNearbyPig();});
+document.getElementById("eatBtn").addEventListener("pointerdown",e=>{e.preventDefault();eatFood();});
+document.getElementById("collectMenuBtn").addEventListener("click",collectNearbyPig);
+document.getElementById("eatMenuBtn").addEventListener("click",eatFood);
+function craftItem(recipe){
+  if(gameMode!=="survival"){status.textContent="Crafting is for Survival mode. Switch to Survival first.";return;}
+  const need=(items)=>items.every(([item,count])=>(inventory[item]||0)>=count);
+  const take=(items)=>items.forEach(([item,count])=>inventory[item]-=count);
+  const recipes={
+    planks:{needs:[["wood",1]],gives:[["planks",4]],label:"4 Wooden Planks"},
+    sticks:{needs:[["planks",2]],gives:[["sticks",4]],label:"4 Sticks"},
+    table:{needs:[["planks",4]],gives:[["crafting_table",1]],label:"Crafting Table"},
+    bed:{needs:[["planks",3],["leaves",3]],gives:[["bed",1]],label:"Bed"},
+    torch:{needs:[["sticks",1],["coal",1]],gives:[["torch",4]],label:"4 Torches"},
+    chest:{needs:[["planks",8]],gives:[["chest",1]],label:"Chest"},
+    furnace:{needs:[["cobble",8]],gives:[["furnace",1]],label:"Furnace"},
+    concrete:{needs:[["sand",4],["clay",4]],gives:[["concrete",4]],label:"4 Concrete"},
+    obsidian:{needs:[["stone",4],["amethyst_shard",2]],gives:[["obsidian",1]],label:"Obsidian"},
+    glowstone:{needs:[["amethyst_shard",4]],gives:[["glowstone",1]],label:"Glowstone"},
+    cherry:{needs:[["wood",2]],gives:[["cherry_wood",2]],label:"Cherry Wood"},
+    shield:{needs:[["planks",6],["iron_ingot",1]],gives:[["shield",1]],label:"Shield"},
+    helmet:{needs:[["iron_ingot",5]],gives:[["iron_helmet",1]],label:"Iron Helmet"},
+    chestplate:{needs:[["iron_ingot",8]],gives:[["iron_chestplate",1]],label:"Iron Chestplate"},
+    leggings:{needs:[["iron_ingot",7]],gives:[["iron_leggings",1]],label:"Iron Leggings"},
+    boots:{needs:[["iron_ingot",4]],gives:[["iron_boots",1]],label:"Iron Boots"},
+    wooden_pick:{needs:[["planks",3],["sticks",2]],gives:[["wooden_pickaxe",1]],label:"Wooden Pickaxe"},
+    stone_pick:{needs:[["cobble",3],["sticks",2]],gives:[["stone_pickaxe",1]],label:"Stone Pickaxe"},
+    axe:{needs:[["planks",3],["sticks",2]],gives:[["wooden_axe",1]],label:"Wooden Axe"},
+    shovel:{needs:[["planks",1],["sticks",2]],gives:[["wooden_shovel",1]],label:"Wooden Shovel"}
+  };
+  const r=recipes[recipe];if(!r)return;
+  if(!need(r.needs)){status.textContent="Not enough materials to craft "+r.label+". Check the 🧰 Craft menu.";return;}
+  take(r.needs);r.gives.forEach(([item,count])=>inventory[item]=(inventory[item]||0)+count);
+  refreshInventoryUI();beep(500,.1,"triangle");status.textContent="Crafted "+r.label+"!";
+}
+const recipeButtons={craftPlanksBtn:"planks",craftSticksBtn:"sticks",craftTableBtn:"table",craftBedBtn:"bed",craftTorchBtn:"torch",craftChestBtn:"chest",craftFurnaceBtn:"furnace",craftConcreteBtn:"concrete",craftObsidianBtn:"obsidian",craftGlowstoneBtn:"glowstone",craftCherryBtn:"cherry",craftShieldBtn:"shield",craftHelmetBtn:"helmet",craftChestplateBtn:"chestplate",craftLeggingsBtn:"leggings",craftBootsBtn:"boots",craftWoodPickBtn:"wooden_pick",craftStonePickBtn:"stone_pick",craftAxeBtn:"axe",craftShovelBtn:"shovel"};
+for(const [id,recipe] of Object.entries(recipeButtons))document.getElementById(id).addEventListener("click",()=>craftItem(recipe));
+const craftOverlay=document.getElementById("craftOverlay");
+function openCrafting(){craftOverlay.style.display="block";refreshInventoryUI();}
+function closeCrafting(){craftOverlay.style.display="none";}
+document.getElementById("craftBtn").addEventListener("click",openCrafting);
+document.getElementById("openCraftFromMenuBtn").addEventListener("click",openCrafting);
+document.getElementById("closeCraftBtn").addEventListener("click",closeCrafting);
+document.getElementById("craftBtn").addEventListener("pointerdown",e=>e.stopPropagation());
+
+// The hotbar is rendered by refreshInventoryUI; the full inventory lives in its own screen.
+const inventoryOverlay=document.getElementById("inventoryOverlay");
+function openInventory(){inventoryOverlay.style.display="block";refreshInventoryUI();}
+function closeInventory(){inventoryOverlay.style.display="none";}
+document.getElementById("inventoryBtn").addEventListener("click",openInventory);
+document.getElementById("closeInventoryBtn").addEventListener("click",closeInventory);
+document.getElementById("inventoryCraftBtn").addEventListener("click",()=>{closeInventory();openCrafting();});
+
+const stationOverlay=document.getElementById("stationOverlay");
+function refreshStationUI(){
+  if(!activeStationKey)return;
+  const storage=stationStorage[activeStationKey]||(stationStorage[activeStationKey]={});
+  const lines=Object.entries(storage).filter(([k,v])=>v>0).map(([k,v])=>`${({planks:"Wooden Planks",cobble:"Cobblestone",pork:"Porkchop",beef:"Raw Beef",iron_ingot:"Iron Ingot",copper_ingot:"Copper Ingot",amethyst_shard:"Amethyst Shard"}[k]||names[k]||k)} × ${v}`);
+  document.getElementById("stationTitle").textContent=activeStationType==="furnace"?"🔥 Furnace":"📦 Chest";
+  document.getElementById("stationDescription").textContent=activeStationType==="furnace"?"Put Iron Ore and Coal into this furnace, then smelt ingots for armor and tools.":"Store items in this chest. Contents are saved with this world.";
+  document.getElementById("stationContents").textContent=lines.length?lines.join("\n"):"Empty";
+  document.getElementById("stationSmeltBtn").style.display=activeStationType==="furnace"?"block":"none";
+}
+function openStation(type,key){
+  activeStationType=type;activeStationKey=key;
+  if(!stationStorage[key])stationStorage[key]={};
+  document.getElementById("stationMessage").textContent="";
+  refreshStationUI();stationOverlay.style.display="block";
+}
+function closeStation(){stationOverlay.style.display="none";activeStationKey=null;activeStationType=null;}
+document.getElementById("stationStoreBtn").addEventListener("click",()=>{
+  if(!activeStationKey)return;const box=stationStorage[activeStationKey];let moved=0;
+  for(const [item,count] of Object.entries(inventory)){if(count>0){box[item]=(box[item]||0)+count;inventory[item]=0;moved+=count;}}
+  refreshInventoryUI();refreshStationUI();document.getElementById("stationMessage").textContent=moved?`Stored ${moved} items.`:"Your inventory is empty.";
+});
+document.getElementById("stationTakeBtn").addEventListener("click",()=>{
+  if(!activeStationKey)return;const box=stationStorage[activeStationKey];let moved=0;
+  for(const [item,count] of Object.entries(box)){if(count>0){inventory[item]=(inventory[item]||0)+count;moved+=count;delete box[item];}}
+  refreshInventoryUI();refreshStationUI();document.getElementById("stationMessage").textContent=moved?`Collected ${moved} items.`:"This station is empty.";
+});
+document.getElementById("stationSmeltBtn").addEventListener("click",()=>{
+  if(!activeStationKey||activeStationType!=="furnace")return;const box=stationStorage[activeStationKey];
+  if((box.iron||0)<1||(box.coal||0)<1){document.getElementById("stationMessage").textContent="Store at least 1 Iron Ore and 1 Coal in the furnace first.";return;}
+  box.iron--;box.coal--;box.iron_ingot=(box.iron_ingot||0)+1;refreshStationUI();document.getElementById("stationMessage").textContent="Smelted 1 Iron Ingot! Take it out when ready.";beep(600,.12,"triangle");
+});
+document.getElementById("stationCloseBtn").addEventListener("click",closeStation);
+
+function toggleCamera(){
+  thirdPerson=!thirdPerson;
+  document.getElementById("cameraBtn").textContent=thirdPerson?"🎥 Third Person":"🎥 First Person";
+  status.textContent=thirdPerson?"Third-person camera enabled.":"First-person camera enabled.";
+}
+document.getElementById("cameraBtn").addEventListener("click",toggleCamera);
+document.getElementById("soundBtn").addEventListener("click",()=>{
+  soundOn=!soundOn;
+  document.getElementById("soundBtn").textContent=soundOn?"🔊 Sound: On":"🔇 Sound: Off";
+  if(soundOn)beep(520,.08,"sine");
+});
+document.getElementById("fullscreenBtn").addEventListener("click",async()=>{
+  try{
+    if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch(_){status.textContent="Fullscreen is unavailable in this browser.";}
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{respawn();status.textContent="Respawned!";});
+
+const menuOverlay=document.getElementById("menuOverlay");
+const menuMessage=document.getElementById("menuMessage");
+let gameStarted=false;
+let returnToMainMenu=false;
+function openMenu(){menuOverlay.style.display="block";}
+function closeMenu(){menuOverlay.style.display="none";if(returnToMainMenu){returnToMainMenu=false;showMainMenu();}}
+let activeSlotId=localStorage.getItem(ACTIVE_SLOT_KEY)||null;
+if(!activeSlotId&&bootSave){const migrated=readSlots().find(slot=>slot.data&&slot.data.seed===bootSave.seed);if(migrated)activeSlotId=migrated.id;}
+const mainMenu=document.getElementById("mainMenu");
+const mainMenuMessage=document.getElementById("mainMenuMessage");
+function readSlots(){
+  let slots=readLocal(SLOTS_KEY);
+  if(!Array.isArray(slots))slots=[];
+  // Migrate the older single-save format into a named slot without deleting it.
+  const legacy=readLocal(SAVE_KEY);
+  if(legacy&&!slots.length){
+    slots.unshift({id:"legacy-world",name:"My World",data:legacy});
+    try{localStorage.setItem(SLOTS_KEY,JSON.stringify(slots));}catch(_){}
+  }
+  return slots.filter(slot=>slot&&typeof slot.id==="string"&&slot.data&&typeof slot.data==="object");
+}
+function showMainMenu(){
+  gameStarted=false;
+  mainMenu.style.display="flex";
+  const lastSave=readLocal(SAVE_KEY);
+  document.getElementById("continueArea").style.display=lastSave?"block":"none";
+  if(lastSave)document.getElementById("continueBtn").textContent="▶ Continue · "+(lastSave.mode==="survival"?"Survival":"Creative")+" · "+(lastSave.worldType==="superflat"?"Superflat":"Normal");
+  renderSavedWorlds();
+}
+function hideMainMenu(){mainMenu.style.display="none";}
+function startWorldLoading(){
+  gameStarted=false;loadingWorld=true;
+  mainMenu.style.display="none";menuOverlay.style.display="none";
+  const screen=document.getElementById("loadingScreen");screen.style.display="flex";
+  document.getElementById("loadingBar").style.width="0%";document.getElementById("loadingPercent").textContent="0%";
+  document.getElementById("loadingMessage").textContent="Preparing your 30-chunk spawn area...";
+  loadedChunks.clear();blocks.clear();meshes.forEach(m=>scene.remove(m));meshes.clear();
+  queueSpawnSquare();lastChunkX=NaN;lastChunkZ=NaN;
+  player.x=Number.isFinite(player.x)?player.x:0;player.z=Number.isFinite(player.z)?player.z:0;
+  status.textContent="Preparing world...";
+}
+function renderSavedWorlds(){
+  const list=document.getElementById("savedWorldList");list.replaceChildren();
+  const slots=readSlots();
+  if(!slots.length){const empty=document.createElement("p");empty.style.cssText="color:#94a3b8;font-size:13px";empty.textContent="No saved worlds yet. Create a world and press Save.";list.appendChild(empty);return;}
+  slots.forEach(slot=>{
+    const card=document.createElement("div");card.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#0a1320;border:1px solid #ffffff22;border-radius:12px;padding:10px";
+    const info=document.createElement("div");info.style.cssText="flex:1;min-width:130px";
+    const name=document.createElement("div");name.style.cssText="font-weight:800";name.textContent=slot.name||"My World";
+    const meta=document.createElement("div");meta.style.cssText="font-size:12px;color:#cbd5e1;margin-top:3px";meta.textContent=(slot.data.mode==="survival"?"❤️ SURVIVAL":"🛠 CREATIVE")+" · "+(slot.data.worldType==="superflat"?"🟩 SUPERFLAT":"🌍 NORMAL")+" · Seed "+(slot.data.seed??"?");
+    info.append(name,meta);
+    const load=document.createElement("button");load.textContent="▶ Load";load.style.padding="9px 12px";load.addEventListener("click",()=>loadWorldSlot(slot.id));
+    const del=document.createElement("button");del.textContent="🗑";del.title="Delete saved world";del.setAttribute("aria-label","Delete "+(slot.name||"world"));del.style.padding="9px 12px";del.addEventListener("click",()=>deleteWorldSlot(slot.id,slot.name||"My World"));
+    card.append(info,load,del);list.appendChild(card);
+  });
+}
+function saveWorld(){
+  const edits={};for(const [key,value] of worldEdits)edits[key]=value;
+  const data={version:5,seed:WORLD_SEED,mode:gameMode,worldType:WORLD_TYPE,inventory:{...inventory},stationStorage:JSON.parse(JSON.stringify(stationStorage)),health,hunger,edits,player:{x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch},savedAt:new Date().toISOString()};
+  try{
+    let slots=readSlots();
+    let slot=slots.find(item=>item.id===activeSlotId);
+    if(!slot){
+      const suggested=gameMode==="survival"?"Survival World":"Creative World";
+      let name=prompt("Name this saved world:",suggested);
+      if(name===null)name=suggested;
+      name=name.trim().slice(0,40)||suggested;
+      activeSlotId="world-"+Date.now()+"-"+Math.floor(Math.random()*10000);
+      slot={id:activeSlotId,name,data};slots.unshift(slot);
+      localStorage.setItem(ACTIVE_SLOT_KEY,activeSlotId);
+    }else{slot.data=data;}
+    // Keep a maximum of 12 save slots so local browser storage remains manageable.
+    slots=slots.slice(0,12);
+    localStorage.setItem(SLOTS_KEY,JSON.stringify(slots));
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+    status.textContent="World saved · "+(gameMode==="survival"?"SURVIVAL":"CREATIVE");
+    menuMessage.textContent="Saved as “"+slot.name+"” · "+(gameMode==="survival"?"❤️ SURVIVAL":"🛠 CREATIVE");
+    mainMenuMessage.textContent="Saved “"+slot.name+"” as "+(gameMode==="survival"?"SURVIVAL":"CREATIVE")+".";
+    renderSavedWorlds();return true;
+  }catch(_){status.textContent="Save failed: browser storage may be full or disabled.";menuMessage.textContent="Save failed. Browser storage may be unavailable.";return false;}
+}
+function loadWorldSlot(id){
+  const slot=readSlots().find(item=>item.id===id);if(!slot)return;
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(slot.data));localStorage.setItem(ACTIVE_SLOT_KEY,id);localStorage.setItem(START_REQUEST_KEY,"load");location.reload();}
+  catch(_){mainMenuMessage.textContent="Couldn't load that save. Browser storage may be unavailable.";}
+}
+function deleteWorldSlot(id,name){
+  if(!confirm("Delete saved world “"+name+"”? This cannot be undone."))return;
+  const slots=readSlots().filter(item=>item.id!==id);
+  try{localStorage.setItem(SLOTS_KEY,JSON.stringify(slots));if(activeSlotId===id){activeSlotId=null;localStorage.removeItem(ACTIVE_SLOT_KEY);localStorage.removeItem(SAVE_KEY);}mainMenuMessage.textContent="Deleted “"+name+"”.";renderSavedWorlds();document.getElementById("continueArea").style.display=readLocal(SAVE_KEY)?"block":"none";}
+  catch(_){mainMenuMessage.textContent="Couldn't delete that world.";}
+}
+function createWorld(mode){
+  try{
+    const chosenType=document.getElementById("worldTypeSelect").value==="superflat"?"superflat":"normal";
+    localStorage.removeItem(SAVE_KEY);localStorage.removeItem(ACTIVE_SLOT_KEY);localStorage.setItem(START_MODE_KEY,JSON.stringify(mode));
+    localStorage.setItem(START_WORLD_TYPE_KEY,JSON.stringify(chosenType));localStorage.setItem(WORLD_TYPE_PREF_KEY,JSON.stringify(chosenType));localStorage.setItem(START_REQUEST_KEY,"new");
+    location.reload();
+  }catch(_){mainMenuMessage.textContent="Couldn't create a world. Browser storage may be disabled.";}
+}
+const worldTypeSelect=document.getElementById("worldTypeSelect");
+worldTypeSelect.value=(readLocal(WORLD_TYPE_PREF_KEY)==="superflat"?"superflat":"normal");
+worldTypeSelect.addEventListener("change",()=>{try{localStorage.setItem(WORLD_TYPE_PREF_KEY,JSON.stringify(worldTypeSelect.value));}catch(_){}});
+document.getElementById("createCreativeBtn").addEventListener("click",()=>createWorld("creative"));
+document.getElementById("createSurvivalBtn").addEventListener("click",()=>createWorld("survival"));
+document.getElementById("continueBtn").addEventListener("click",()=>startWorldLoading());
+document.getElementById("mainSettingsBtn").addEventListener("click",()=>{returnToMainMenu=true;hideMainMenu();openMenu();});
+document.getElementById("mainExitBtn").addEventListener("click",()=>{mainMenuMessage.textContent="Choose a world and press Creative or Survival to start.";});
+document.getElementById("saveBtn").addEventListener("click",saveWorld);
+document.getElementById("saveMenuBtn").addEventListener("click",saveWorld);
+document.getElementById("menuBtn").addEventListener("click",openMenu);
+document.getElementById("backToArcadeBtn").addEventListener("click",()=>{ window.location.href="../index.html"; });
+document.getElementById("modeBtn").addEventListener("click",toggleMode);
+document.getElementById("modeMenuBtn").addEventListener("click",toggleMode);
+refreshModeUI();
+document.getElementById("resumeBtn").addEventListener("click",closeMenu);
+document.getElementById("closeMenuBtn").addEventListener("click",closeMenu);
+document.getElementById("loadBtn").addEventListener("click",()=>{menuMessage.textContent="A saved world will load when you reload this page. Reload now to restore the last save.";status.textContent="Reload the page to load your saved world.";});
+document.getElementById("newWorldBtn").addEventListener("click",()=>{
+  if(!confirm("Start a new random world? Save first if you want to keep this one."))return;
+  try{localStorage.removeItem(SAVE_KEY);}catch(_){}
+  location.reload();
+});
+const savedSettings=readLocal(SETTINGS_KEY)||{};
+const qualitySelect=document.getElementById("qualitySelect"),distanceSelect=document.getElementById("distanceSelect");
+qualitySelect.value=String(savedSettings.quality||1);
+distanceSelect.value=String([1,2,3,4].includes(savedSettings.distance)?savedSettings.distance:3);
+CHUNK_RADIUS=Number(distanceSelect.value)||3;
+renderer.setPixelRatio(Math.min((devicePixelRatio||1)*(Number(qualitySelect.value)||1),1.75));
+renderer.setSize(innerWidth,innerHeight);
+function applySettings(){
+  const quality=Number(qualitySelect.value)||1;
+  renderer.setPixelRatio(Math.min((devicePixelRatio||1)*quality,1.75));
+  CHUNK_RADIUS=Number(distanceSelect.value)||3;
+  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality,distance:CHUNK_RADIUS}));}catch(_){}
+  updateChunks(true);
+  menuMessage.textContent="Settings applied. Lower quality or near render distance can improve performance.";
+}
+qualitySelect.addEventListener("change",applySettings);
+distanceSelect.addEventListener("change",applySettings);
+if(bootSave)status.textContent="Saved world ready · "+(bootSave.mode==="survival"?"SURVIVAL":"CREATIVE")+" · "+(bootSave.worldType==="superflat"?"SUPERFLAT":"NORMAL");
+showMainMenu();
+const startupRequest=localStorage.getItem(START_REQUEST_KEY);
+if(startupRequest){try{localStorage.removeItem(START_REQUEST_KEY);}catch(_){}startWorldLoading();}
+
+function updatePlayer(dt){
+  let f=0,s=0;
+
+  // Keyboard movement plus smooth analog joystick movement.
+  if(keys.has("w")||keys.has("arrowup"))f--;
+  if(keys.has("s")||keys.has("arrowdown"))f++;
+  if(keys.has("a")||keys.has("arrowleft"))s--;
+  if(keys.has("d")||keys.has("arrowright"))s++;
+  f-=touch.forward;f+=touch.back;s-=touch.left;s+=touch.right;
+
+  const len=Math.hypot(f,s);
+  if(len>0){f/=len;s/=len;}
+  const speed=keys.has("shift")?7.2:5.2;
+  const sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
+  // Rotate movement by the current camera yaw so forward always follows where you look.
+  player.vx=(s*cos+f*sin)*speed;
+  player.vz=(-s*sin+f*cos)*speed;
+
+  const steps=Math.max(1,Math.ceil(Math.max(Math.abs(player.vx*dt),Math.abs(player.vz*dt))/.1));
+  const dx=player.vx*dt/steps,dz=player.vz*dt/steps;
+  for(let i=0;i<steps;i++){
+    if(!collides(player.x+dx,player.y,player.z))player.x+=dx;
+    if(!collides(player.x,player.y,player.z+dz))player.z+=dz;
+  }
+
+  player.vy-=22*dt;
+  const vSteps=Math.max(1,Math.ceil(Math.abs(player.vy*dt)/.1));
+  const dy=player.vy*dt/vSteps;
+  player.grounded=false;
+  for(let i=0;i<vSteps;i++){
+    if(!collides(player.x,player.y+dy,player.z))player.y+=dy;
+    else{if(dy<0)player.grounded=true;player.vy=0;break;}
+  }
+  if(player.y < -30){if(gameMode==="survival"){const armor=(inventory.iron_helmet>0?1:0)+(inventory.iron_chestplate>0?2:0)+(inventory.iron_leggings>0?1:0)+(inventory.iron_boots>0?1:0)+(inventory.shield>0?1:0);health=Math.max(1,health-Math.max(1,5-Math.floor(armor/2)));refreshModeUI();}respawn();}
+  if(gameMode==="survival"){
+    hungerClock+=dt;damageClock+=dt;
+    if(hungerClock>=12){hunger=Math.max(0,hunger-1);hungerClock=0;refreshModeUI();}
+    if(hunger===0&&damageClock>=3){health=Math.max(1,health-1);damageClock=0;refreshModeUI();}
+    if(hunger>=18&&health<20&&damageClock>=5){health=Math.min(20,health+1);damageClock=0;refreshModeUI();}
+  }
+
+  avatar.position.set(player.x,player.y,player.z);
+  avatar.rotation.y=player.yaw;
+  avatar.visible=thirdPerson;
+  const walking=len>.01,t=performance.now()*.009;
+  legL.rotation.x=walking?Math.sin(t)*.65:0;
+  legR.rotation.x=walking?-Math.sin(t)*.65:0;
+  armL.rotation.x=walking?-Math.sin(t)*.55:0;
+  armR.rotation.x=walking?Math.sin(t)*.55:0;
+}
+
+function updateCamera(){
+  const eye=new THREE.Vector3(player.x,player.y+1.58,player.z);
+  const direction=new THREE.Vector3(
+    -Math.sin(player.yaw)*Math.cos(player.pitch),
+    Math.sin(player.pitch),
+    -Math.cos(player.yaw)*Math.cos(player.pitch)
+  );
+  if(!thirdPerson){
+    camera.position.copy(eye);
+    camera.lookAt(eye.clone().add(direction));
+    return;
+  }
+  const target=new THREE.Vector3(player.x,player.y+1.25,player.z);
+  // Orbit the third-person camera through almost a full vertical range.
+  // Positive pitch looks upward; negative pitch looks downward.
+  const orbitRadius=4.5*Math.cos(player.pitch);
+  const behind=new THREE.Vector3(
+    Math.sin(player.yaw)*orbitRadius,
+    -Math.sin(player.pitch)*4.5,
+    Math.cos(player.yaw)*orbitRadius
+  );
+  const desired=target.clone().add(behind);
+  const rayDirection=desired.clone().sub(target).normalize();
+  raycaster.set(target,rayDirection);raycaster.far=4.5;
+  const hits=raycaster.intersectObjects(getNearbyRenderMeshes(),false);
+  if(hits.length&&hits[0].distance<4.5){
+    desired.copy(target).add(rayDirection.multiplyScalar(Math.max(.5,hits[0].distance-.25)));
+  }
+  camera.position.copy(desired);camera.lookAt(target);
+}
+
+let previous=performance.now();
+let worldClock=0;
+const daySky=new THREE.Color(0x87ceeb),nightSky=new THREE.Color(0x10182f),skyNow=new THREE.Color();
+let fpsFrames=0,fpsTimer=0,fpsValue=60;
+function updateDayNight(dt){
+  worldClock=(worldClock+dt/240)%1;
+  const daylight=Math.max(0,Math.sin(worldClock*Math.PI*2-Math.PI/2));
+  const light=0.22+daylight*1.78;
+  sun.intensity=0.18+daylight*1.9;
+  scene.children[0].intensity=0.35+daylight*1.55;
+  skyNow.copy(nightSky).lerp(daySky,Math.max(.08,daylight));
+  scene.background.copy(skyNow);
+  scene.fog.color.copy(skyNow);
+  scene.fog.near=CHUNK_RADIUS<=1?28:45;
+  scene.fog.far=Math.max(65,CHUNK_RADIUS*CHUNK_SIZE*2.3);
+  sun.position.set(Math.cos(worldClock*Math.PI*2)*28,Math.max(2,daylight*40),Math.sin(worldClock*Math.PI*2)*28);
+  return daylight;
+}
+
+// Rare Herobrine nightmare event. The normal world is hidden, not modified,
+// while the player explores a temporary dim tunnel. Audio is intentionally capped.
+const nightmareOverlay=document.getElementById("nightmareOverlay");
+const nightmareTitle=document.getElementById("nightmareTitle");
+const nightmareTimer=document.getElementById("nightmareTimer");
+let nightmareActive=false,nightmarePhase="idle",nightmareRollClock=0,nightmarePhaseClock=0;
+let nightmareSaved=null,nightmareGroup=null,herobrineGroup=null,nightmareRevealLight=null;
+let portalGroup=null,level94Group=null,level94Monsters=[],level94Redirecting=false;
+let level94Houses=[],playerHiding=false,hidingHouse=null,dreamcoreGroup=null,dreamcoreAudio=null;
+let dreamcorePortal=null;
+let level94RumbleContext=null;
+let nightmareAudioStarted=false;
+const nightmareMaterials={
+  stone:new THREE.MeshLambertMaterial({color:0x45434b}),
+  floor:new THREE.MeshLambertMaterial({color:0x303038}),
+  redstone:new THREE.MeshLambertMaterial({color:0xc52b25,emissive:0x8b100b}),
+  shadow:new THREE.MeshLambertMaterial({color:0x242127}),
+  shirt:new THREE.MeshLambertMaterial({color:0x654047}),
+  pants:new THREE.MeshLambertMaterial({color:0x39313b}),
+  skin:new THREE.MeshLambertMaterial({color:0xa17a70}),
+  stains:new THREE.MeshLambertMaterial({color:0x652026}),
+  eyes:new THREE.MeshBasicMaterial({color:0xffffff})
+};
+function buildNightmareTunnel(){
+  const root=new THREE.Group();root.name="temporary-herobrine-tunnel";
+  const floorGeo=new THREE.BoxGeometry(8,.5,240),wallGeo=new THREE.BoxGeometry(.5,5,240),ceilingGeo=new THREE.BoxGeometry(8,.5,240);
+  const floor=new THREE.Mesh(floorGeo,nightmareMaterials.floor);floor.position.set(0,-1.25,0);root.add(floor);
+  const ceiling=new THREE.Mesh(ceilingGeo,nightmareMaterials.shadow);ceiling.position.set(0,4,0);root.add(ceiling);
+  for(const x of [-4,4]){const wall=new THREE.Mesh(wallGeo,nightmareMaterials.stone);wall.position.set(x,1.25,0);root.add(wall);}
+  // Repeating ribs and side recesses make the corridor feel much larger.
+  for(let z=-116;z<=116;z+=8){
+    for(const x of [-3.45,3.45]){
+      const rib=new THREE.Mesh(new THREE.BoxGeometry(.42,4.7,.55),nightmareMaterials.shadow);
+      rib.position.set(x,1.25,z);root.add(rib);
+      const lamp=new THREE.Mesh(new THREE.BoxGeometry(.26,.12,.24),nightmareMaterials.redstone);
+      lamp.position.set(x*.91,2.5,z);root.add(lamp);
+      const light=new THREE.PointLight(0xff382e,.9,10,1.6);
+      light.position.set(x*.88,2.45,z);root.add(light);
+    }
+  }
+  // Soft neutral fill lights keep the corridor readable on dim screens.
+  for(let z=-96;z<=96;z+=24){
+    const fill=new THREE.PointLight(0x9a8f9f,.48,13,1.8);
+    fill.position.set(0,2.65,z);root.add(fill);
+  }
+  // A few dead-end alcoves visible through the gloom.
+  for(const z of [-72,-32,20,64]){
+    for(const side of [-1,1]){
+      const back=new THREE.Mesh(new THREE.BoxGeometry(2.8,3.7,.45),nightmareMaterials.shadow);
+      back.position.set(side*4.95,.9,z);root.add(back);
+      const sideWall=new THREE.Mesh(new THREE.BoxGeometry(2.6,3.7,.4),nightmareMaterials.stone);
+      sideWall.position.set(side*5.7,.9,z+1.1);sideWall.rotation.y=side*.12;root.add(sideWall);
+    }
+  }
+  const portal=new THREE.Group();portal.name="level-94-portal";
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(2.05,.24,12,48),new THREE.MeshBasicMaterial({color:0xffffff}));
+  ring.position.set(0,1.25,-111.2);portal.add(ring);
+  const core=new THREE.Mesh(new THREE.PlaneGeometry(3.75,4.6),new THREE.MeshBasicMaterial({color:0xf4fbff,transparent:true,opacity:.97,side:THREE.DoubleSide}));
+  core.position.set(0,1.15,-111.25);portal.add(core);
+  const aura=new THREE.PointLight(0xffffff,9,75,1.1);aura.position.set(0,1.4,-108);portal.add(aura);
+  for(let i=0;i<3;i++){const halo=new THREE.Mesh(new THREE.TorusGeometry(2.05+i*.38,.045,8,48),new THREE.MeshBasicMaterial({color:0xc9efff,transparent:true,opacity:.68-i*.15}));halo.position.set(0,1.25,-111.15+i*.03);portal.add(halo);}
+  root.add(portal);portalGroup=portal;
+  scene.add(root);return root;
+}
+function level94Height(x,z){return 1.5+Math.sin(x*.035+z*.012)*3.1+Math.cos(z*.027-x*.014)*2.3+Math.sin((x+z)*.018)*1.7;}
+function buildLevel94(){
+  if(level94Group){level94Group.visible=true;return;}
+  const root=new THREE.Group();root.name="backrooms-level-94-hills";
+  const groundGeo=new THREE.PlaneGeometry(1600,1600,120,120);groundGeo.rotateX(-Math.PI/2);
+  const pos=groundGeo.attributes.position;
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,level94Height(x,z));}
+  groundGeo.computeVertexNormals();
+  root.add(new THREE.Mesh(groundGeo,new THREE.MeshLambertMaterial({color:0x4d9840})));
+  const houseMats=[0xe4dfcf,0xb8c8d3,0xc8b6a1,0x9caeb5].map(color=>new THREE.MeshLambertMaterial({color}));
+  const roofMats=[0x6d4140,0x4c5158,0x7d6b58].map(color=>new THREE.MeshLambertMaterial({color}));
+  const windowMat=new THREE.MeshLambertMaterial({color:0x263c48});
+  let seed=94094;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  for(let i=0;i<260;i++){
+    let x=(rand()-.5)*1350,z=(rand()-.5)*1350;
+    if(Math.abs(x)<24&&Math.abs(z)<24){x+=rand()<.5?42:-42;z+=36;}
+    const g=new THREE.Group(),w=5+rand()*4,d=5+rand()*4,h=3.5+rand()*2.2;
+    const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),houseMats[Math.floor(rand()*houseMats.length)]);body.position.y=h/2;g.add(body);
+    const roof=new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*.76,2.6,4),roofMats[Math.floor(rand()*roofMats.length)]);roof.rotation.y=Math.PI/4;roof.position.y=h+1.05;g.add(roof);
+    const door=new THREE.Mesh(new THREE.BoxGeometry(.8,1.8,.08),new THREE.MeshLambertMaterial({color:0x49382c}));door.position.set(0,.9,d/2+.045);g.add(door);
+    for(const wx of [-w*.25,w*.25]){const win=new THREE.Mesh(new THREE.BoxGeometry(.85,.85,.08),windowMat);win.position.set(wx,h*.62,d/2+.05);g.add(win);}
+    g.position.set(x,level94Height(x,z),z);g.rotation.y=rand()*Math.PI*2;root.add(g);
+    level94Houses.push({group:g,x,z,y:level94Height(x,z),rotation:g.rotation.y,w,d,h});
+  }
+  // A huge water tower with a strange portal beneath its legs.
+  const tower=new THREE.Group();tower.name="giant-water-tower";
+  const metal=new THREE.MeshLambertMaterial({color:0x59666b}),tankMat=new THREE.MeshLambertMaterial({color:0x778f91});
+  const legs=[[-8,-8],[8,-8],[-8,8],[8,8]];
+  for(const [lx,lz] of legs){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.7,.95,24,8),metal);leg.position.set(lx,12,lz);tower.add(leg);}
+  const tank=new THREE.Mesh(new THREE.CylinderGeometry(12,10,15,16),tankMat);tank.position.y=30;tower.add(tank);
+  const cap=new THREE.Mesh(new THREE.ConeGeometry(12,5,16),new THREE.MeshLambertMaterial({color:0x465b61}));cap.position.y=40;tower.add(cap);
+  tower.position.set(100,level94Height(100,-100),-100);root.add(tower);
+  const tp=new THREE.Group();tp.name="dreamcore-portal";
+  const pr=new THREE.Mesh(new THREE.TorusGeometry(3.2,.32,12,48),new THREE.MeshBasicMaterial({color:0xffb8ec}));
+  pr.position.set(100,level94Height(100,-100)+.1,-100);tp.add(pr);
+  const pc=new THREE.Mesh(new THREE.CircleGeometry(3,40),new THREE.MeshBasicMaterial({color:0x9d79ff,side:THREE.DoubleSide}));
+  pc.position.set(100,level94Height(100,-100)+.12,-100);pc.rotation.x=-Math.PI/2;tp.add(pc);
+  const pl=new THREE.PointLight(0xffa7ef,5,35);pl.position.set(100,level94Height(100,-100)+2,-100);tp.add(pl);
+  root.add(tp);dreamcorePortal={x:100,z:-100,y:level94Height(100,-100),group:tp};
+  const black=new THREE.MeshLambertMaterial({color:0x030406}),headMat=new THREE.MeshBasicMaterial({color:0x080a0e});
+  for(let i=0;i<12;i++){
+    const g=new THREE.Group();
+    const torso=new THREE.Mesh(new THREE.BoxGeometry(2.3,7.2,1.25),black);torso.position.y=9.5;g.add(torso);
+    const head=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.4,1.65),headMat);head.position.y=14.4;g.add(head);
+    for(const side of [-1,1]){
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(.55,8.5,.58),black);arm.position.set(side*1.55,8.5,0);arm.rotation.z=side*.08;g.add(arm);
+      const leg=new THREE.Mesh(new THREE.BoxGeometry(.72,7.4,.8),black);leg.position.set(side*.68,3.7,0);g.add(leg);
+    }
+    const x=(rand()-.5)*700,z=(rand()-.5)*700;g.position.set(x,level94Height(x,z),z);root.add(g);
+    level94Monsters.push({group:g,x,z,speed:5.8+rand()*.35,phase:rand()*6.28});
+  }
+  level94Group=root;scene.add(root);root.visible=false;
+}
+function buildDreamcore(){
+  if(dreamcoreGroup){dreamcoreGroup.visible=true;return;}
+  const root=new THREE.Group();root.name="dreamcore-no-exit";
+  const geo=new THREE.PlaneGeometry(1800,1800,100,100);geo.rotateX(-Math.PI/2);
+  const p=geo.attributes.position;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,2+Math.sin(x*.009)*10+Math.cos(z*.012)*7+Math.sin((x+z)*.008)*5);}
+  geo.computeVertexNormals();root.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:0x78ad55})));
+  // Oversized pastel flowers with unmistakable eyes in their centers.
+  for(let i=0;i<280;i++){
+    const x=(Math.random()-.5)*1450,z=(Math.random()-.5)*1450,y=2+Math.sin(x*.009)*10+Math.cos(z*.012)*7+Math.sin((x+z)*.008)*5;
+    const flower=new THREE.Group();flower.position.set(x,y,z);
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,2.8,6),new THREE.MeshLambertMaterial({color:0x367c3b}));stem.position.y=1.4;flower.add(stem);
+    const colors=[0xffc6e7,0xffe6a6,0xc8c4ff,0xffffff,0xf6a8a8],col=colors[i%colors.length];
+    for(let j=0;j<7;j++){const a=j*Math.PI*2/7,petal=new THREE.Mesh(new THREE.SphereGeometry(.72,10,8),new THREE.MeshLambertMaterial({color:col}));petal.scale.set(1,.48,.7);petal.position.set(Math.cos(a)*.85,3+Math.sin(a)*.85,0);flower.add(petal);}
+    // Oversized daisy-eye: fleshy eyelids, pale sclera, blue-grey iris, dark pupil and catchlight.
+    const lid=new THREE.Mesh(new THREE.SphereGeometry(.83,16,12),new THREE.MeshLambertMaterial({color:0xd8c9a4}));lid.scale.set(1,.68,.42);lid.position.set(0,3,.18);flower.add(lid);
+    const eyeWhite=new THREE.Mesh(new THREE.SphereGeometry(.72,18,14),new THREE.MeshBasicMaterial({color:0xf7f4e8}));eyeWhite.scale.set(1,.72,.55);eyeWhite.position.set(0,3,.34);flower.add(eyeWhite);
+    const iris=new THREE.Mesh(new THREE.SphereGeometry(.49,20,16),new THREE.MeshBasicMaterial({color:0x273e59}));iris.scale.set(1,.98,.48);iris.position.set(.02,3,.69);flower.add(iris);
+    const irisRing=new THREE.Mesh(new THREE.TorusGeometry(.43,.045,8,28),new THREE.MeshBasicMaterial({color:0x71818a}));irisRing.position.set(.02,3,.81);flower.add(irisRing);
+    for(let k=0;k<12;k++){const a=k*Math.PI/6,ray=new THREE.Mesh(new THREE.BoxGeometry(.025,.19,.018),new THREE.MeshBasicMaterial({color:k%2?0x81909a:0x111d2d}));ray.position.set(.02+Math.cos(a)*.29,3+Math.sin(a)*.29,.84);ray.rotation.z=a;flower.add(ray);}
+    const pupil=new THREE.Mesh(new THREE.SphereGeometry(.29,16,12),new THREE.MeshBasicMaterial({color:0x05080c}));pupil.scale.set(1,1,.5);pupil.position.set(.04,3,.88);flower.add(pupil);
+    const glint=new THREE.Mesh(new THREE.SphereGeometry(.075,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));glint.position.set(-.1,3.14,.98);flower.add(glint);root.add(flower);
+  }
+  // Soft clouds with eyes floating above the hills.
+  for(let i=0;i<36;i++){
+    const x=(Math.random()-.5)*1300,z=(Math.random()-.5)*1300,y=65+Math.random()*65,c=new THREE.Group();
+    for(let j=0;j<6;j++){const puff=new THREE.Mesh(new THREE.SphereGeometry(7+Math.random()*5,12,10),new THREE.MeshLambertMaterial({color:0xfff9f7}));puff.position.set((j-2.5)*7,Math.sin(j)*3,0);c.add(puff);}
+    for(const ex of [-2.3,2.3]){const socket=new THREE.Mesh(new THREE.SphereGeometry(2.25,14,12),new THREE.MeshBasicMaterial({color:0xd9d5d0}));socket.scale.set(1,.76,.42);socket.position.set(ex,-1,7.7);c.add(socket);const ew=new THREE.Mesh(new THREE.SphereGeometry(1.9,16,12),new THREE.MeshBasicMaterial({color:0xfffdf3}));ew.scale.set(1,.78,.52);ew.position.set(ex,-1,8.1);c.add(ew);const iris=new THREE.Mesh(new THREE.SphereGeometry(.95,14,12),new THREE.MeshBasicMaterial({color:0x607c91}));iris.scale.set(1,1,.5);iris.position.set(ex+.12,-1,9.05);c.add(iris);const ep=new THREE.Mesh(new THREE.SphereGeometry(.59,12,10),new THREE.MeshBasicMaterial({color:0x10131b}));ep.scale.set(1,1,.5);ep.position.set(ex+.18,-1,9.48);c.add(ep);const shine=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));shine.position.set(ex-.1,-.72,9.72);c.add(shine);}
+    c.position.set(x,y,z);root.add(c);
+  }
+  dreamcoreGroup=root;scene.add(root);root.visible=false;
+}
+function enterDreamcore(){
+  const grain=document.getElementById("analogGrain");grain.style.display="block";grain.style.opacity=".24";
+  buildDreamcore();level94Group.visible=false;dreamcoreGroup.visible=true;
+  nightmarePhase="dreamcore";player.x=0;player.z=0;player.y=level94Height(0,0);player.vy=0;
+  scene.background.set(0x5a9fe8);scene.fog.color.set(0x8ab9ed);scene.fog.near=250;scene.fog.far=1500;
+  sun.intensity=1.65;scene.children[0].intensity=1.6;
+  nightmareTitle.textContent="A PLACE TO STAY";nightmareTimer.textContent="The flowers are watching. The clouds know you're here.";
+  status.textContent="Dreamcore · the portal is gone behind you";
+  if(soundOn){
+    try{if(!dreamcoreAudio){dreamcoreAudio=new Audio(new URL("./dreamcore.mp3",document.baseURI).href);dreamcoreAudio.loop=true;dreamcoreAudio.volume=.72;}
+      dreamcoreAudio.currentTime=0;const q=dreamcoreAudio.play();if(q&&q.catch)q.catch(()=>{status.textContent="Dreamcore music needs dreamcore.mp3 in the sandbox folder and Sound On.";});
+    }catch(_){}
+  }
+}
+function buildHerobrine(){
+  const g=new THREE.Group();g.name="herobrine";
+  function piece(w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);g.add(m);return m;}
+  // Familiar blocky player silhouette, distorted and weathered, without graphic gore.
+  piece(.64,.66,.36,nightmareMaterials.shirt,0,1.12,0);
+  piece(.4,.42,.38,nightmareMaterials.skin,0,1.68,0);
+  piece(.43,.12,.4,nightmareMaterials.shadow,0,1.91,0);
+  piece(.21,.65,.23,nightmareMaterials.shirt,-.43,1.1,.02).rotation.z=-.16;
+  piece(.21,.65,.23,nightmareMaterials.shirt,.43,1.1,-.02).rotation.z=.23;
+  piece(.27,.58,.28,nightmareMaterials.pants,-.17,.56,0).rotation.z=.07;
+  piece(.27,.58,.28,nightmareMaterials.pants,.17,.56,0).rotation.z=-.1;
+  piece(.12,.22,.03,nightmareMaterials.stains,-.15,1.28,-.195);
+  piece(.2,.1,.03,nightmareMaterials.stains,.1,1.48,-.205);
+  for(const x of [-.105,.105])piece(.095,.075,.03,nightmareMaterials.eyes,x,1.73,-.222);
+  g.scale.set(1.65,1.65,1.65);scene.add(g);g.visible=false;return g;
+}
+function setNightmareWorldVisible(visible){
+  for(const list of chunkRenderMeshes.values())for(const mesh of list)mesh.visible=visible;
+  for(const cloud of clouds)cloud.group.visible=visible;
+  for(const mob of mobs)mob.group.visible=visible;
+  avatar.visible=visible&&thirdPerson;
+}
+function startNightmare(){
+  if(nightmareActive||!gameStarted)return;
+  nightmareActive=true;nightmarePhase="tunnel";nightmarePhaseClock=0;
+  const grain=document.getElementById("analogGrain");grain.style.display="block";grain.style.opacity=".24";
+  nightmareSaved={x:player.x,y:player.y,z:player.z,yaw:player.yaw,pitch:player.pitch,
+    bg:scene.background.clone(),fog:scene.fog.color.clone(),fogNear:scene.fog.near,fogFar:scene.fog.far,
+    sun:sun.intensity,hemi:scene.children[0].intensity,thirdPerson,gameMode};
+  setNightmareWorldVisible(false);
+  scene.background.set(0x030203);scene.fog.color.set(0x030203);scene.fog.near=3;scene.fog.far=260;
+  sun.intensity=.12;scene.children[0].intensity=.38;
+  if(!nightmareGroup)nightmareGroup=buildNightmareTunnel();else nightmareGroup.visible=true;
+  if(portalGroup)portalGroup.visible=true;
+  if(level94Group)level94Group.visible=false;
+  level94Monsters.forEach(m=>m.group.visible=false);level94Redirecting=false;
+  if(!herobrineGroup)herobrineGroup=buildHerobrine();else herobrineGroup.visible=false;
+  player.x=0;player.y=0;player.z=92;player.vx=player.vy=player.vz=0;player.yaw=0;player.pitch=0;
+  avatar.visible=false;keys.clear();resetJoystick();
+  nightmareOverlay.style.display="block";nightmareOverlay.className="";
+  nightmareTitle.textContent="WHERE ARE YOU?";
+  nightmareTimer.textContent="Follow the blinding white portal at the end of the tunnel";
+  status.textContent="A strange event has begun...";
+}
+// Secret keyboard easter egg: type "herobrian" during active gameplay.
+let herobrineSecretBuffer="";
+let herobrineSecretLastKey=0;
+window.addEventListener("keydown",e=>{
+  if(e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+  if(nightmareActive && e.key.toLowerCase()==="e" && nightmarePhase==="level94"){
+    if(playerHiding){playerHiding=false;hidingHouse=null;status.textContent="You stepped back outside.";return;}
+    let nearest=null,nearestD=10;
+    for(const h of level94Houses){const d=Math.hypot(player.x-h.x,player.z-h.z);if(d<nearestD){nearest=h;nearestD=d;}}
+    if(nearest){playerHiding=true;hidingHouse=nearest;player.x=nearest.x+Math.sin(nearest.rotation)*(nearest.d/2-.65);player.z=nearest.z+Math.cos(nearest.rotation)*(nearest.d/2-.65);player.y=nearest.y+nearest.h*.62;player.yaw=nearest.rotation+Math.PI;player.pitch=0;status.textContent="You're hidden inside. Press E to leave.";nightmareTimer.textContent="Quiet. Watch through the window...";e.preventDefault();}
+    else if(dreamcorePortal&&Math.hypot(player.x-dreamcorePortal.x,player.z-dreamcorePortal.z)<12){enterDreamcore();e.preventDefault();}
+    return;
+  }
+  if(!gameStarted || nightmareActive) return;
+  const target=e.target;
+  if(target && (target.isContentEditable || ["INPUT","TEXTAREA","SELECT"].includes(target.tagName))) return;
+  const now=Date.now();
+  if(now-herobrineSecretLastKey>2200) herobrineSecretBuffer="";
+  herobrineSecretLastKey=now;
+  if(e.key.length===1 && /^[a-z]$/i.test(e.key)){
+    herobrineSecretBuffer=(herobrineSecretBuffer+e.key.toLowerCase()).slice(-9);
+    if(herobrineSecretBuffer==="herobrian"){
+      herobrineSecretBuffer="";
+      startNightmare();
+    }
+  }else if(e.key==="Backspace"){
+    herobrineSecretBuffer=herobrineSecretBuffer.slice(0,-1);
+  }
+});
+
+let nightmareScreamAudio=null;
+let nightmareAudioUnlocked=false;
+function prepareNightmareAudio(){
+  if(nightmareAudioUnlocked)return;
+  try{
+    if(!nightmareScreamAudio){
+      nightmareScreamAudio=new Audio(new URL("./slendy1.mp3",document.baseURI).href);
+      nightmareScreamAudio.preload="auto";
+      nightmareScreamAudio.volume=0.65;
+    }
+    // iPad Safari often blocks audio until an actual user gesture. Start and
+    // immediately pause a muted copy during the first tap/key interaction.
+    nightmareScreamAudio.muted=true;
+    const p=nightmareScreamAudio.play();
+    if(p&&typeof p.then==="function"){
+      p.then(()=>{
+        nightmareScreamAudio.pause();
+        nightmareScreamAudio.currentTime=0;
+        nightmareScreamAudio.muted=false;
+        nightmareAudioUnlocked=true;
+      }).catch(()=>{
+        nightmareScreamAudio.muted=false;
+      });
+    }else{
+      nightmareScreamAudio.pause();
+      nightmareScreamAudio.currentTime=0;
+      nightmareScreamAudio.muted=false;
+      nightmareAudioUnlocked=true;
+    }
+  }catch(_){}
+}
+window.addEventListener("pointerdown",prepareNightmareAudio,{once:true,passive:true});
+window.addEventListener("keydown",prepareNightmareAudio,{once:true});
+function playNightmareSting(){
+  if(!soundOn)return;
+  try{
+    if(!nightmareScreamAudio){
+      nightmareScreamAudio=new Audio(new URL("./slendy1.mp3",document.baseURI).href);
+      nightmareScreamAudio.preload="auto";
+      nightmareScreamAudio.volume=0.65;
+    }
+    nightmareScreamAudio.muted=false;
+    nightmareScreamAudio.volume=0.65;
+    nightmareScreamAudio.pause();
+    nightmareScreamAudio.currentTime=0;
+    const playback=nightmareScreamAudio.play();
+    if(playback&&typeof playback.then==="function"){
+      playback.catch(()=>{
+        status.textContent="Herobrine audio was blocked or couldn't load. Check that sandbox/slendy1.mp3 exists and tap the page once with Sound On.";
+      });
+    }
+  }catch(_){
+    status.textContent="Herobrine audio couldn't start. Check that sandbox/slendy1.mp3 exists.";
+  }
+}
+function beginHerobrineReveal(){
+  nightmarePhase="reveal";nightmarePhaseClock=0;
+  nightmareTitle.textContent="HE FOUND YOU";
+  nightmareTimer.textContent="";
+  nightmareOverlay.classList.add("jumpscare");
+  herobrineGroup.visible=true;
+  // Place a larger, fully lit figure a little farther ahead so the whole model reads.
+  herobrineGroup.position.set(player.x,player.y-.02,player.z-2.65);
+  herobrineGroup.rotation.y=player.yaw+Math.PI;
+  if(nightmareRevealLight)scene.remove(nightmareRevealLight);
+  nightmareRevealLight=new THREE.PointLight(0xffe5dc,3.2,12,1.35);
+  nightmareRevealLight.position.set(player.x,player.y+2.2,player.z-3.3);
+  scene.add(nightmareRevealLight);
+  player.yaw=0;player.pitch=0;
+  playNightmareSting();
+}
+function enterLevel94(){
+  nightmarePhase="falling";nightmarePhaseClock=0;
+  const grain=document.getElementById("analogGrain");grain.style.display="block";grain.style.opacity=".24";
+  if(nightmareGroup)nightmareGroup.visible=false;
+  if(portalGroup)portalGroup.visible=false;
+  buildLevel94();level94Group.visible=true;level94Monsters.forEach(m=>m.group.visible=true);playerHiding=false;hidingHouse=null;
+  scene.background.set(0x8bc7f0);scene.fog.color.set(0x8bc7f0);scene.fog.near=180;scene.fog.far=1100;
+  sun.intensity=2.1;scene.children[0].intensity=1.8;
+  player.x=0;player.z=0;player.y=95;player.vy=0;player.vx=player.vz=0;player.yaw=0;player.pitch=0;thirdPerson=false;avatar.visible=false;
+  nightmareTitle.textContent="LEVEL 94";nightmareTimer.textContent="Falling into the hills... you will survive";
+  status.textContent="Level 94 · find a route through the hills and houses";
+}
+function playLevel94Rumble(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    if(!level94RumbleContext)level94RumbleContext=new AC();
+    const ctx=level94RumbleContext;if(ctx.state==="suspended")ctx.resume();
+    const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
+    osc.type="sawtooth";osc.frequency.setValueAtTime(72,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(31,ctx.currentTime+1.4);
+    filter.type="lowpass";filter.frequency.value=145;
+    gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.18,ctx.currentTime+.12);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+1.8);
+    osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+1.85);
+  }catch(_){}
+}
+function level94Caught(){
+  if(level94Redirecting)return;
+  level94Redirecting=true;nightmarePhase="caught";nightmarePhaseClock=0;nightmareOverlay.classList.add("jumpscare");
+  nightmareTitle.textContent="CAUGHT";nightmareTimer.textContent="Returning to Classroom Arcade...";
+  playLevel94Rumble();
+  setTimeout(()=>{window.location.href=new URL("../index.html",document.baseURI).href;},2400);
+}
+function endNightmare(){
+  nightmareActive=false;nightmarePhase="idle";nightmarePhaseClock=0;nightmareRollClock=0;
+  document.getElementById("analogGrain").style.display="none";
+  if(nightmareGroup)nightmareGroup.visible=false;
+  if(level94Group)level94Group.visible=false;
+  if(dreamcoreGroup)dreamcoreGroup.visible=false;
+  if(dreamcoreAudio){dreamcoreAudio.pause();dreamcoreAudio.currentTime=0;}
+  playerHiding=false;hidingHouse=null;
+  if(herobrineGroup)herobrineGroup.visible=false;
+  if(nightmareRevealLight){scene.remove(nightmareRevealLight);nightmareRevealLight=null;}
+  nightmareOverlay.style.display="none";nightmareOverlay.className="";
+  if(nightmareSaved){
+    player.x=nightmareSaved.x;player.y=nightmareSaved.y;player.z=nightmareSaved.z;
+    player.yaw=nightmareSaved.yaw;player.pitch=nightmareSaved.pitch;
+    scene.background.copy(nightmareSaved.bg);scene.fog.color.copy(nightmareSaved.fog);
+    scene.fog.near=nightmareSaved.fogNear;scene.fog.far=nightmareSaved.fogFar;
+    sun.intensity=nightmareSaved.sun;scene.children[0].intensity=nightmareSaved.hemi;
+  }
+  setNightmareWorldVisible(true);avatar.visible=thirdPerson;
+  // The event returns to the title menu; the existing world remains in memory and untouched.
+  showMainMenu();
+  status.textContent="You escaped the nightmare. Your world is safe.";
+}
+function updateNightmare(dt){
+  if(!nightmareActive){
+    if(!gameStarted)return;
+    nightmareRollClock+=dt;
+    if(nightmareRollClock>=30){
+      nightmareRollClock-=30;
+      if(Math.floor(Math.random()*10000)===0)startNightmare();
+    }
+    return;
+  }
+  nightmarePhaseClock+=dt;
+  if(nightmarePhase==="tunnel"){
+    let f=0,side=0;
+    if(keys.has("w")||keys.has("arrowup"))f--;
+    if(keys.has("s")||keys.has("arrowdown"))f++;
+    if(keys.has("a")||keys.has("arrowleft"))side--;
+    if(keys.has("d")||keys.has("arrowright"))side++;
+    f-=touch.forward;f+=touch.back;side-=touch.left;side+=touch.right;
+    const len=Math.hypot(f,side);if(len>0){f/=len;side/=len;}
+    const speed=keys.has("shift")?5.2:3.8,sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
+    player.x=THREE.MathUtils.clamp(player.x+(side*cos+f*sin)*speed*dt,-3.15,3.15);
+    player.z=THREE.MathUtils.clamp(player.z+(-side*sin+f*cos)*speed*dt,-116,116);player.y=0;
+    nightmareTimer.textContent="Reach the glowing portal · "+Math.max(0,Math.ceil((player.z+111)/3))+"m";
+    if(player.z<=-108)enterLevel94();
+  }else if(nightmarePhase==="falling"){
+    player.vy-=20*dt;player.y+=player.vy*dt;
+    const ground=level94Height(player.x,player.z);
+    if(player.y<=ground){player.y=ground;player.vy=0;const grain=document.getElementById("analogGrain");grain.style.display="block";grain.style.opacity=".24";nightmarePhase="level94";nightmarePhaseClock=0;
+      nightmareTitle.textContent="LEVEL 94";nightmareTimer.textContent="Hills, houses... and something watching";
+      nightmareOverlay.classList.remove("jumpscare");
+    }
+  }else if(nightmarePhase==="level94"){
+    let f=0,side=0;
+    if(keys.has("w")||keys.has("arrowup"))f--;
+    if(keys.has("s")||keys.has("arrowdown"))f++;
+    if(keys.has("a")||keys.has("arrowleft"))side--;
+    if(keys.has("d")||keys.has("arrowright"))side++;
+    f-=touch.forward;f+=touch.back;side-=touch.left;side+=touch.right;
+    const len=Math.hypot(f,side);if(len>0){f/=len;side/=len;}
+    const speed=keys.has("shift")?7.2:5.2,sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
+    player.x+=(side*cos+f*sin)*speed*dt;player.z+=(-side*sin+f*cos)*speed*dt;
+    player.x=THREE.MathUtils.clamp(player.x,-790,790);player.z=THREE.MathUtils.clamp(player.z,-790,790);
+    const ground=level94Height(player.x,player.z);player.y=ground;
+    if(playerHiding&&hidingHouse){player.x=hidingHouse.x+Math.sin(hidingHouse.rotation)*(hidingHouse.d/2-.65);player.z=hidingHouse.z+Math.cos(hidingHouse.rotation)*(hidingHouse.d/2-.65);player.y=hidingHouse.y+hidingHouse.h*.62;nightmareTimer.textContent="Hidden inside. Press E to leave and return to the hills.";}
+    if(!playerHiding && dreamcorePortal&&Math.hypot(player.x-dreamcorePortal.x,player.z-dreamcorePortal.z)<18){
+      nightmareTimer.textContent="A portal glows beneath the water tower. Press E to enter.";
+    }else{nightmareTimer.textContent="Find the huge water tower. Press E at a house door to hide.";}
+    if(!playerHiding)for(const m of level94Monsters){
+      const dx=player.x-m.x,dz=player.z-m.z,dist=Math.hypot(dx,dz);
+      if(dist<145&&dist>.01){
+        const step=m.speed*dt;m.x+=dx/dist*step;m.z+=dz/dist*step;
+        m.group.position.set(m.x,level94Height(m.x,m.z),m.z);m.group.rotation.y=Math.atan2(dx,dz);
+      }
+      if(dist<3.6){level94Caught();break;}
+    }
+    nightmareTimer.textContent="Keep moving. The figures are hunting you.";
+  }else if(nightmarePhase==="dreamcore"){
+    let f=0,side=0;
+    if(keys.has("w")||keys.has("arrowup"))f--;
+    if(keys.has("s")||keys.has("arrowdown"))f++;
+    if(keys.has("a")||keys.has("arrowleft"))side--;
+    if(keys.has("d")||keys.has("arrowright"))side++;
+    f-=touch.forward;f+=touch.back;side-=touch.left;side+=touch.right;
+    const len=Math.hypot(f,side);if(len>0){f/=len;side/=len;}
+    const speed=keys.has("shift")?7:4.5,sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
+    player.x=THREE.MathUtils.clamp(player.x+(side*cos+f*sin)*speed*dt,-880,880);
+    player.z=THREE.MathUtils.clamp(player.z+(-side*sin+f*cos)*speed*dt,-880,880);
+    player.y=2+Math.sin(player.x*.009)*10+Math.cos(player.z*.012)*7+Math.sin((player.x+player.z)*.008)*5;
+    nightmareTimer.textContent="Everything feels peaceful. Nothing leads out.";
+  }else if(nightmarePhase==="caught"){
+    // The redirect timer is running; keep the jumpscare visible.
+  }
+}
+
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt=Math.min((now-previous)/1000,.035);previous=now;
+  fpsFrames++;fpsTimer+=dt;if(fpsTimer>=1){fpsValue=Math.round(fpsFrames/fpsTimer);fpsFrames=0;fpsTimer=0;}
+  if(gameStarted&&!nightmareActive)updateDayNight(dt);
+  if((loadingWorld||gameStarted)&&!nightmareActive)processChunkQueue();
+  if(gameStarted&&!nightmareActive)updateChunks();
+  if(!nightmareActive)flushDirtyChunkMeshes();
+  if(loadingWorld){
+    const done=Math.min(loadedChunks.size,preloadTarget);
+    const pct=Math.floor(done/preloadTarget*100);
+    document.getElementById("loadingBar").style.width=pct+"%";
+    document.getElementById("loadingPercent").textContent=pct+"%";
+    document.getElementById("loadingMessage").textContent=done<preloadTarget?`Generating chunks · ${done} of ${preloadTarget} ready`:"Finishing spawn area...";
+    if(done>=preloadTarget&&!chunkQueue.length&&!activeChunkJob){
+      loadingWorld=false;gameStarted=true;document.getElementById("loadingScreen").style.display="none";
+      status.textContent=`World ready · ${loadedChunks.size} chunks · ${fpsValue} FPS · Seed ${WORLD_SEED}`;
+      updateChunks(true);
+    }
+  }
+  if(gameStarted&&!nightmareActive){
+    updateMobs(now,dt);
+    if(loadedChunks.has(chunkKey(Math.floor(player.x/CHUNK_SIZE),Math.floor(player.z/CHUNK_SIZE))))updatePlayer(dt);
+  }
+  updateNightmare(dt);
+  if(!nightmareActive)for(const cloud of clouds){cloud.group.position.x+=cloud.speed*dt;if(cloud.group.position.x>130)cloud.group.position.x=-130;}
+  updateCamera();renderer.render(scene,camera);
+  if(gameStarted&&Math.floor(now/1800)!==Math.floor((now-dt*1000)/1800))status.textContent=`${gameMode.toUpperCase()} · ${loadedChunks.size} chunks · ${fpsValue} FPS · ${WORLD_TYPE.toUpperCase()}`;
+}
+window.addEventListener("resize",()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+requestAnimationFrame(animate);
+status.textContent="Ready · choose a world and press Creative or Survival to start";
+})();
+</script>
+<script src="../touch-controls.js" defer></script>
+</body>
+</html>
