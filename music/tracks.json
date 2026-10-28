@@ -101,8 +101,9 @@
       "url": "./audio/10%20Stay%20Away.mp3"
     },
     {
-  "title": "01 On Sight",
-  "artist": "Kanye West",
-  "url": "./audio/01%20On%20Sight.mp3"
+      "title": "01 On Sight",
+      "artist": "Kanye West",
+      "url": "./audio/01%20On%20Sight.mp3"
+    }
   ]
 }
