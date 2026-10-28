@@ -3,17 +3,17 @@
     {
       "title": "Come As You Are",
       "artist": "Nirvana",
-      "url": "./audio/03-come-as-you-are.mp3"
+      "url": "./audio/Come%20As%20You%20Are%20-%20Nirvana%20-%20Spotimate.app.mp3"
     },
     {
       "title": "Smells Like Teen Spirit",
       "artist": "Nirvana",
-      "url": "./audio/01-smells-like-teen-spirit.mp3"
+      "url": "./audio/Smells%20Like%20Teen%20Spirit%20-%20Nirvana%20-%20Spotimate.app.mp3"
     },
     {
       "title": "On Sight",
       "artist": "Kanye West",
-      "url": "./audio/01%20On%20Sight.mp3"
+      "url": "./audio/On%20Sight%20-%20Kanye%20West%20-%20Spotimate.app.mp3"
     }
   ]
 }
