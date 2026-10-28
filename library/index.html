@@ -146,7 +146,6 @@ const games=[
 {id:'racing',title:'Neon Racer',system:'browser',genre:'racing',emoji:'🏎️',desc:'Dodge traffic in an original mini-game.',url:'../arcade/',action:'Open Arcade Hub'},
 {id:'builder',title:'Pixel Builder',system:'browser',genre:'sandbox',emoji:'🟩',desc:'Place and remove blocks in a tiny world.',url:'../arcade/',action:'Open Arcade Hub'},
 {id:'sandbox3d',title:'Classroom Sandbox',system:'browser',genre:'sandbox',emoji:'🌎',desc:'Explore the site’s existing 3D block world.',url:'../sandbox/',action:'Open sandbox'},
-{id:'stardew-valley',title:'Stardew Valley',system:'steam',genre:'simulation',emoji:'🌱',desc:'Cozy farming, fishing, crafting, and exploration. This Windows build cannot run directly in the browser; use the guide for official Steam and Steam Link options.',url:'../stardew/',action:'Open launch guide'},
 {id:'doom',title:'DOOM / DOOM II',system:'doom',genre:'action',emoji:'💀',desc:'Open the existing Dwasm player with built-in presets and local WAD selection.',url:'../doom/',action:'Open DOOM player'},
 {id:'modern-pc',title:'Modern PC Emulator (v86)',system:'pc',genre:'retro',emoji:'💾',desc:'Scan for and boot compatible PC disk images, DOS, and older x86 operating systems. Not a general emulator for modern 3D Windows games.',url:'#pc-emulator',action:'Open PC emulator'},
 ...Object.entries(systems).map(([id,s])=>({id:'system-'+id,title:s.label,system:id,genre:'retro',emoji:'🎮',desc:'Load a compatible game file from your own device. '+s.ext,url:'#loader',action:'Choose file'}))
